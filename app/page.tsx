@@ -363,7 +363,8 @@ export default function DashboardPage() {
                   {dashboardData.recentSales.map((sale) => (
                     <tr key={sale.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="font-medium text-gray-900">{sale.client.name}</div>
+                        <div className="font-medium text-gray-900">{sale.client?.name || sale.client}
+</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-lg font-bold text-green-600">
