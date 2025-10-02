@@ -1,0 +1,922 @@
+﻿// =====================================
+// lib/db.ts - DATABASE MANAGER
+// Versão COMPLETAMENTE corrigida e verificada + LICENCIAMENTO PERSISTENTE
+// =====================================
+
+import { PrismaClient } from '@prisma/client';
+import type { 
+  Customer, 
+  Sale, 
+  ContactHistory, 
+  ContactHistoryFormData,
+  Goal 
+} from '@/types';
+
+// Interface local para Representative (não existe em @/types)
+interface Representative {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+// Interface para dados de licença (mantendo compatibilidade com license-manager.ts)
+export interface LicenseData {
+  browserFingerprint: string;
+  licenseKey: string;
+  createdAt: string;
+  expiresAt?: string;
+  deviceInfo: {
+    userAgent: string;
+    platform: string;
+    language: string;
+    timezone: string;
+    screenResolution: string;
+  };
+  features: string[];
+  maxUsers?: number;
+  companyName?: string;
+  isTestVersion?: boolean;
+  daysRemaining?: number;
+  fingerprintHistory?: string[];
+  usagePattern?: {
+    lastUsed: string;
+    totalUsageHours: number;
+    suspiciousScore: number;
+    dailyUsage: { [date: string]: number };
+  };
+}
+
+const prisma = new PrismaClient();
+
+// =====================================
+// GERENCIAMENTO DE REPRESENTANTES
+// =====================================
+
+export async function getOrCreateDefaultRepresentative(): Promise<number> {
+  try {
+    // Primeiro tenta buscar um representante existente
+    let representative = await prisma.representative.findFirst();
+    
+    if (!representative) {
+      // Se não existir, cria o representante padrão
+      console.log('📌 Criando representante padrão...');
+      representative = await prisma.representative.create({
+        data: {
+          name: 'Sistema Padrão',
+          email: 'sistema@empresa.com',
+          phone: '(51) 0000-0000'
+        }
+      });
+      console.log('✅ Representative padrão criado:', representative.id);
+    }
+    
+    return representative.id;
+  } catch (error) {
+    console.error('❌ Erro ao obter/criar representante:', error);
+    // Em caso de erro, retorna ID 1 como fallback
+    return 1;
+  }
+}
+
+// =====================================
+// FUNÇÕES DE CLIENTES
+// =====================================
+
+export async function createClient(data: Partial<Customer>) {
+  try {
+    const representativeId = await getOrCreateDefaultRepresentative();
+    
+    // IMPORTANTE: O modelo Client no Prisma NÃO tem campo 'status'
+    // Removendo referências a campos que não existem no schema
+    const client = await prisma.client.create({
+      data: {
+        name: data.name || '',
+        email: data.email || '',
+        phone: data.phone || '',
+        company: data.company || '',
+        address: data.address || '',
+        city: data.city || '',
+        state: data.state || 'RS',
+        zipCode: data.postal_code || '',
+        // status: REMOVIDO - não existe no schema
+        tipo_pessoa: data.tipo_pessoa || 'fisica',
+        cpf: data.cpf || null,
+        cnpj: data.cnpj || null,
+        razao_social: data.razao_social || null,
+        inscricao_estadual: data.inscricao_estadual || null,
+        notes: data.notes || null,
+        client_notes: data.client_notes || null,
+        representativeId
+      }
+    });
+    return {
+      success: true,
+      lastInsertRowid: client.id,
+      rowsAffected: 1
+    };
+  } catch (error) {
+    console.error('❌ Erro ao criar cliente:', error);
+    return {
+      success: false,
+      lastInsertRowid: 0,
+      rowsAffected: 0,
+      error: error instanceof Error ? error.message : 'Erro desconhecido'
+    };
+  }
+}
+
+export async function getAllclients(): Promise<Customer[]> {
+  try {
+    const clients = await prisma.client.findMany({
+      orderBy: { createdAt: 'desc' }
+    });
+    
+    return clients.map((client: any) => ({
+      id: client.id, // Mantendo como number, não converter para string
+      name: client.name || '',
+      email: client.email || '',
+      phone: client.phone || '',
+      company: client.company || '',
+      address: client.address || '',
+      city: client.city || '',
+      state: client.state || 'RS',
+      postal_code: client.zipCode || '',
+      client_notes: client.client_notes || '',
+      // status: REMOVIDO - não existe no tipo Customer
+      tipo_pessoa: (client.tipo_pessoa === 'juridica' ? 'juridica' : 'fisica') as 'fisica' | 'juridica',
+      cpf: client.cpf || '',
+      cnpj: client.cnpj || '',
+      razao_social: client.razao_social || '',
+      inscricao_estadual: client.inscricao_estadual || '',
+      notes: client.notes || '',
+      created_at: client.createdAt?.toISOString() || new Date().toISOString(),
+      updated_at: client.updatedAt?.toISOString() || new Date().toISOString()
+    }));
+  } catch (error) {
+    console.error('❌ Erro ao buscar clientes:', error);
+    return [];
+  }
+}
+
+export async function getClientById(id: number | string): Promise<Customer | null> {
+  try {
+    const clientId = typeof id === 'string' ? parseInt(id) : id;
+    const client = await prisma.client.findUnique({
+      where: { id: clientId }
+    });
+    
+    if (!client) return null;
+    
+    return {
+      id: client.id, // Mantendo como number, não converter para string
+      name: client.name || '',
+      email: client.email || '',
+      phone: client.phone || '',
+      company: client.company || '',
+      address: client.address || '',
+      city: client.city || '',
+      state: client.state || 'RS',
+      postal_code: client.zipCode || '',
+      client_notes: client.client_notes || '',
+      // status: REMOVIDO - não existe no tipo Customer
+      tipo_pessoa: (client.tipo_pessoa === 'juridica' ? 'juridica' : 'fisica') as 'fisica' | 'juridica',
+      cpf: client.cpf || '',
+      cnpj: client.cnpj || '',
+      razao_social: client.razao_social || '',
+      inscricao_estadual: client.inscricao_estadual || '',
+      notes: client.notes || '',
+      created_at: client.createdAt?.toISOString() || new Date().toISOString(),
+      updated_at: client.updatedAt?.toISOString() || new Date().toISOString()
+    };
+  } catch (error) {
+    console.error('❌ Erro ao buscar cliente:', error);
+    return null;
+  }
+}
+
+export async function updateClient(id: number | string, data: Partial<Customer>) {
+  try {
+    const clientId = typeof id === 'string' ? parseInt(id) : id;
+    
+    // Preparando dados para update - removendo campos que não existem no schema
+    const updateData: any = {};
+    if (data.name !== undefined) updateData.name = data.name;
+    if (data.email !== undefined) updateData.email = data.email;
+    if (data.phone !== undefined) updateData.phone = data.phone;
+    if (data.company !== undefined) updateData.company = data.company;
+    if (data.address !== undefined) updateData.address = data.address;
+    if (data.city !== undefined) updateData.city = data.city;
+    if (data.state !== undefined) updateData.state = data.state;
+    if (data.postal_code !== undefined) updateData.zipCode = data.postal_code;
+    // status: REMOVIDO - não existe no schema
+    if (data.tipo_pessoa !== undefined) updateData.tipo_pessoa = data.tipo_pessoa;
+    if (data.cpf !== undefined) updateData.cpf = data.cpf || null;
+    if (data.cnpj !== undefined) updateData.cnpj = data.cnpj || null;
+    if (data.razao_social !== undefined) updateData.razao_social = data.razao_social || null;
+    if (data.inscricao_estadual !== undefined) updateData.inscricao_estadual = data.inscricao_estadual || null;
+    if (data.notes !== undefined) updateData.notes = data.notes || null;
+    if (data.client_notes !== undefined) updateData.client_notes = data.client_notes || null;
+    
+    const updated = await prisma.client.update({
+      where: { id: clientId },
+      data: updateData
+    });
+    
+    return { success: true, rowsAffected: 1 };
+  } catch (error) {
+    console.error('❌ Erro ao atualizar cliente:', error);
+    return { 
+      success: false, 
+      rowsAffected: 0,
+      error: error instanceof Error ? error.message : 'Erro desconhecido'
+    };
+  }
+}
+
+export async function deleteClient(id: number | string) {
+  try {
+    const clientId = typeof id === 'string' ? parseInt(id) : id;
+    
+    await prisma.client.delete({
+      where: { id: clientId }
+    });
+    
+    return { success: true, rowsAffected: 1 };
+  } catch (error) {
+    console.error('❌ Erro ao deletar cliente:', error);
+    return { 
+      success: false, 
+      rowsAffected: 0,
+      error: error instanceof Error ? error.message : 'Erro desconhecido'
+    };
+  }
+}
+
+// =====================================
+// FUNÇÕES DE VENDAS
+// =====================================
+
+export async function createSale(data: any) { // Usando any para flexibilidade
+  try {
+    const representativeId = await getOrCreateDefaultRepresentative();
+    
+    const sale = await prisma.sale.create({
+      data: {
+        sale_date: new Date(data.sale_date),
+        customer_id: data.customer_id,
+        customer_name: data.customer_name,
+        product_service: data.product || data.product_service || '', // Aceita ambos
+        total_amount: data.amount || data.total_amount || 0,
+        commission_rate: data.commission_percentage ? data.commission_percentage / 100 : 0.05,
+        commission_amount: data.commission_value || data.commission_amount || 0,
+        status: data.status || 'Pendente',
+        notes: data.notes || null,
+        quantity: data.quantity || 1,
+        unit_price: data.amount || data.unit_price || 0,
+        payment_method: data.payment_method || 'Dinheiro',
+        active: true,
+        representativeId
+      }
+    });
+    
+    return {
+      success: true,
+      lastInsertRowid: sale.id,
+      rowsAffected: 1
+    };
+  } catch (error) {
+    console.error('❌ Erro ao criar venda:', error);
+    return {
+      success: false,
+      lastInsertRowid: 0,
+      rowsAffected: 0,
+      error: error instanceof Error ? error.message : 'Erro desconhecido'
+    };
+  }
+}
+
+export async function getAllSales(representativeId?: number): Promise<any[]> { // Mudado para any[]
+  try {
+    const where = representativeId ? { representativeId } : {};
+    
+    const sales = await prisma.sale.findMany({
+      where,
+      orderBy: { sale_date: 'desc' }
+    });
+    
+    return sales.map((sale: any) => ({
+      id: String(sale.id),
+      sale_date: sale.sale_date?.toISOString() || new Date().toISOString(),
+      customer_id: sale.customer_id,
+      customer_name: sale.customer_name || '',
+      product: sale.product_service || '', // Mapeando de product_service para product
+      amount: sale.total_amount || 0,      // Mapeando de total_amount para amount
+      commission_percentage: (sale.commission_rate || 0) * 100,
+      commission_value: sale.commission_amount || 0,
+      status: sale.status || 'Pendente',
+      payment_date: null,
+      notes: sale.notes || '',
+      created_at: sale.createdAt?.toISOString() || new Date().toISOString(),
+      updated_at: sale.updatedAt?.toISOString() || new Date().toISOString(),
+      // Campos adicionais do schema para compatibilidade
+      product_service: sale.product_service || '',
+      quantity: sale.quantity || 1,
+      unit_price: sale.unit_price || 0,
+      total_amount: sale.total_amount || 0,
+      commission_rate: sale.commission_rate || 0.05,
+      commission_amount: sale.commission_amount || 0,
+      payment_method: sale.payment_method || 'Dinheiro'
+    }));
+  } catch (error) {
+    console.error('❌ Erro ao buscar vendas:', error);
+    return [];
+  }
+}
+
+export async function updateSale(id: number | string, data: any) { // Usando any
+  try {
+    const saleId = typeof id === 'string' ? parseInt(id) : id;
+    
+    const updateData: any = {};
+    if (data.sale_date !== undefined) updateData.sale_date = new Date(data.sale_date);
+    if (data.customer_id !== undefined) updateData.customer_id = data.customer_id;
+    if (data.customer_name !== undefined) updateData.customer_name = data.customer_name;
+    if (data.product !== undefined || data.product_service !== undefined) {
+      updateData.product_service = data.product || data.product_service;
+    }
+    if (data.amount !== undefined || data.total_amount !== undefined) {
+      updateData.total_amount = data.amount || data.total_amount;
+      updateData.unit_price = data.amount || data.total_amount;
+    }
+    if (data.commission_percentage !== undefined) {
+      updateData.commission_rate = data.commission_percentage / 100;
+    }
+    if (data.commission_value !== undefined || data.commission_amount !== undefined) {
+      updateData.commission_amount = data.commission_value || data.commission_amount;
+    }
+    if (data.status !== undefined) updateData.status = data.status;
+    if (data.notes !== undefined) updateData.notes = data.notes;
+    
+    const updated = await prisma.sale.update({
+      where: { id: saleId },
+      data: updateData
+    });
+    
+    return { success: true, rowsAffected: 1 };
+  } catch (error) {
+    console.error('❌ Erro ao atualizar venda:', error);
+    return { 
+      success: false, 
+      rowsAffected: 0,
+      error: error instanceof Error ? error.message : 'Erro desconhecido'
+    };
+  }
+}
+
+export async function deleteSale(id: number | string) {
+  try {
+    const saleId = typeof id === 'string' ? parseInt(id) : id;
+    
+    await prisma.sale.delete({
+      where: { id: saleId }
+    });
+    
+    return { success: true, rowsAffected: 1 };
+  } catch (error) {
+    console.error('❌ Erro ao deletar venda:', error);
+    return { 
+      success: false, 
+      rowsAffected: 0,
+      error: error instanceof Error ? error.message : 'Erro desconhecido'
+    };
+  }
+}
+
+// =====================================
+// FUNÇÕES DE HISTÓRICO DE CONTATOS
+// =====================================
+
+export async function createContactHistory(data: ContactHistoryFormData) {
+  try {
+    const contact = await prisma.contactHistory.create({
+      data: {
+        client_id: parseInt(data.client_id),
+        contact_date: new Date(data.contact_date),
+        contact_type: data.contact_type,
+        subject: data.subject || null,
+        outcome: data.outcome || null,
+        notes: data.notes || null,
+        next_action: data.next_action || null
+      }
+    });
+    
+    return {
+      success: true,
+      lastInsertRowid: contact.id,
+      rowsAffected: 1
+    };
+  } catch (error) {
+    console.error('❌ Erro ao criar histórico de contato:', error);
+    return {
+      success: false,
+      lastInsertRowid: 0,
+      rowsAffected: 0,
+      error: error instanceof Error ? error.message : 'Erro desconhecido'
+    };
+  }
+}
+
+export async function getContactHistoryByClientId(clientId: number | string): Promise<ContactHistory[]> {
+  try {
+    const id = typeof clientId === 'string' ? parseInt(clientId) : clientId;
+    
+    const contacts = await prisma.contactHistory.findMany({
+      where: { client_id: id },
+      orderBy: { contact_date: 'desc' }
+    });
+    
+    return contacts.map((contact: any) => ({
+      id: String(contact.id),
+      client_id: String(contact.client_id),
+      contact_date: contact.contact_date?.toISOString() || new Date().toISOString(),
+      contact_type: contact.contact_type || '',
+      subject: contact.subject || '',
+      outcome: contact.outcome || '',
+      notes: contact.notes || '',
+      next_action: contact.next_action || '',
+      created_at: contact.createdAt?.toISOString() || new Date().toISOString(),
+      updated_at: contact.updatedAt?.toISOString() || new Date().toISOString()
+    }));
+  } catch (error) {
+    console.error('❌ Erro ao buscar histórico de contatos:', error);
+    return [];
+  }
+}
+
+export async function updateContactHistory(id: number | string, data: Partial<ContactHistoryFormData>) {
+  try {
+    const contactId = typeof id === 'string' ? parseInt(id) : id;
+    
+    const updateData: any = {};
+    if (data.client_id !== undefined) updateData.client_id = parseInt(data.client_id);
+    if (data.contact_date !== undefined) updateData.contact_date = new Date(data.contact_date);
+    if (data.contact_type !== undefined) updateData.contact_type = data.contact_type;
+    if (data.subject !== undefined) updateData.subject = data.subject;
+    if (data.outcome !== undefined) updateData.outcome = data.outcome;
+    if (data.notes !== undefined) updateData.notes = data.notes;
+    if (data.next_action !== undefined) updateData.next_action = data.next_action;
+    
+    const updated = await prisma.contactHistory.update({
+      where: { id: contactId },
+      data: updateData
+    });
+    return { success: true, rowsAffected: 1, data: [updated] }; // Retornando array
+  } catch (error) {
+    console.error('❌ Erro ao atualizar histórico de contato:', error);
+    return { 
+      success: false, 
+      rowsAffected: 0,
+      data: [], // Retornando array vazio em caso de erro
+      error: error instanceof Error ? error.message : 'Erro desconhecido'
+    };
+  }
+}
+
+export async function deleteContactHistory(id: number | string) {
+  try {
+    const contactId = typeof id === 'string' ? parseInt(id) : id;
+    
+    await prisma.contactHistory.delete({
+      where: { id: contactId }
+    });
+    
+    return { success: true, rowsAffected: 1 };
+  } catch (error) {
+    console.error('❌ Erro ao deletar histórico de contato:', error);
+    return { 
+      success: false, 
+      rowsAffected: 0,
+      error: error instanceof Error ? error.message : 'Erro desconhecido'
+    };
+  }
+}
+
+// =====================================
+// FUNÇÕES DE OBJETIVOS/METAS
+// =====================================
+
+export async function createGoal(data: any) { // Usando any
+  try {
+    const goal = await prisma.goal.create({
+      data: {
+        period_type: data.period_type || 'monthly',
+        period_start: new Date(data.start_date || data.period_start || new Date()),
+        period_end: new Date(data.end_date || data.period_end || new Date()),
+        target_amount: data.target_value || data.target_amount || 0,
+        target_sales: data.target_sales || null,
+        current_amount: data.current_value || data.current_amount || 0,
+        current_sales: data.current_sales || 0,
+        status: data.status || 'active',
+        notes: data.notes || data.title || null // Usando title como notes se existir
+      }
+    });
+    
+    return {
+      success: true,
+      lastInsertRowid: goal.id,
+      rowsAffected: 1
+    };
+  } catch (error) {
+    console.error('❌ Erro ao criar meta:', error);
+    return {
+      success: false,
+      lastInsertRowid: 0,
+      rowsAffected: 0,
+      error: error instanceof Error ? error.message : 'Erro desconhecido'
+    };
+  }
+}
+
+export async function getAllGoals(representativeId?: number): Promise<any[]> { // Mudado para any[]
+  try {
+    const goals = await prisma.goal.findMany({
+      orderBy: { createdAt: 'desc' }
+    });
+    
+    return goals.map((goal: any) => ({
+      id: String(goal.id),
+      title: goal.notes || '', // Mapeando notes para title
+      target_value: goal.target_amount || 0,
+      current_value: goal.current_amount || 0,
+      start_date: goal.period_start?.toISOString() || new Date().toISOString(),
+      end_date: goal.period_end?.toISOString() || new Date().toISOString(),
+      period_type: goal.period_type || 'monthly',
+      status: goal.status || 'active',
+      notes: goal.notes || '',
+      created_at: goal.createdAt?.toISOString() || new Date().toISOString(),
+      updated_at: goal.updatedAt?.toISOString() || new Date().toISOString(),
+      // Campos adicionais do schema
+      period_start: goal.period_start?.toISOString(),
+      period_end: goal.period_end?.toISOString(),
+      target_amount: goal.target_amount || 0,
+      target_sales: goal.target_sales,
+      current_amount: goal.current_amount || 0,
+      current_sales: goal.current_sales || 0
+    }));
+  } catch (error) {
+    console.error('❌ Erro ao buscar metas:', error);
+    return [];
+  }
+}
+
+export async function updateGoal(id: number | string, data: any) { // Usando any
+  try {
+    const goalId = typeof id === 'string' ? parseInt(id) : id;
+    
+    const updateData: any = {};
+    if (data.title !== undefined) updateData.notes = data.title; // title vira notes
+    if (data.target_value !== undefined || data.target_amount !== undefined) {
+      updateData.target_amount = data.target_value || data.target_amount;
+    }
+    if (data.current_value !== undefined || data.current_amount !== undefined) {
+      updateData.current_amount = data.current_value || data.current_amount;
+    }
+    if (data.start_date !== undefined || data.period_start !== undefined) {
+      updateData.period_start = new Date(data.start_date || data.period_start);
+    }
+    if (data.end_date !== undefined || data.period_end !== undefined) {
+      updateData.period_end = new Date(data.end_date || data.period_end);
+    }
+    if (data.period_type !== undefined) updateData.period_type = data.period_type;
+    if (data.status !== undefined) updateData.status = data.status;
+    if (data.notes !== undefined) updateData.notes = data.notes;
+    if (data.target_sales !== undefined) updateData.target_sales = data.target_sales;
+    if (data.current_sales !== undefined) updateData.current_sales = data.current_sales;
+    
+    const updated = await prisma.goal.update({
+      where: { id: goalId },
+      data: updateData
+    });
+    
+    return { success: true, rowsAffected: 1 };
+  } catch (error) {
+    console.error('❌ Erro ao atualizar meta:', error);
+    return { 
+      success: false, 
+      rowsAffected: 0,
+      error: error instanceof Error ? error.message : 'Erro desconhecido'
+    };
+  }
+}
+
+export async function deleteGoal(id: number | string) {
+  try {
+    const goalId = typeof id === 'string' ? parseInt(id) : id;
+    
+    await prisma.goal.delete({
+      where: { id: goalId }
+    });
+    
+    return { success: true, rowsAffected: 1 };
+  } catch (error) {
+    console.error('❌ Erro ao deletar meta:', error);
+    return { 
+      success: false, 
+      rowsAffected: 0,
+      error: error instanceof Error ? error.message : 'Erro desconhecido'
+    };
+  }
+}
+
+// =====================================
+// FUNÇÕES DE REPRESENTANTES
+// =====================================
+
+export async function getAllRepresentatives(): Promise<Representative[]> {
+  try {
+    const representatives = await prisma.representative.findMany({
+      orderBy: { createdAt: 'desc' }
+    });
+    
+    return representatives.map((rep: any) => ({
+      id: String(rep.id),
+      name: rep.name || '',
+      email: rep.email || '',
+      phone: rep.phone || '',
+      created_at: rep.createdAt?.toISOString() || new Date().toISOString(),
+      updated_at: rep.updatedAt?.toISOString() || new Date().toISOString()
+    }));
+  } catch (error) {
+    console.error('❌ Erro ao buscar representantes:', error);
+    return [];
+  }
+}
+
+export async function createRepresentative(data: Partial<Representative>) {
+  try {
+    const representative = await prisma.representative.create({
+      data: {
+        name: data.name || '',
+        email: data.email || '',
+        phone: data.phone || ''
+      }
+    });
+    
+    return {
+      success: true,
+      lastInsertRowid: representative.id,
+      rowsAffected: 1
+    };
+  } catch (error) {
+    console.error('❌ Erro ao criar representante:', error);
+    return {
+      success: false,
+      lastInsertRowid: 0,
+      rowsAffected: 0,
+      error: error instanceof Error ? error.message : 'Erro desconhecido'
+    };
+  }
+}
+
+// =====================================
+// FUNÇÕES DE LICENCIAMENTO PERSISTENTE
+// =====================================
+
+export async function initLicenseDB(): Promise<void> {
+  try {
+    // Garantir que existe pelo menos um registro de licença
+    const existingLicense = await prisma.license.findFirst();
+    
+    if (!existingLicense) {
+      console.log('📄 Criando licença inicial...');
+      
+      // Criar licença trial de 90 dias
+      const trialExpiration = new Date();
+      trialExpiration.setDate(trialExpiration.getDate() + 90);
+      
+      await prisma.license.create({
+        data: {
+          licenseType: 'trial',
+          isValid: true,
+          expirationDate: trialExpiration,
+          activationDate: new Date(),
+          lastValidation: new Date(),
+          suspiciousScore: 0,
+          toleranceMode: false,
+          validationCount: 0,
+          metadata: {
+            autoCreated: true,
+            version: '1.0.3',
+            initialActivation: new Date().toISOString()
+          }
+        }
+      });
+      
+      console.log('✅ Licença trial de 90 dias criada automaticamente');
+    }
+  } catch (error) {
+    console.error('❌ Erro ao inicializar banco de licenças:', error);
+  }
+}
+
+export async function saveLicenseToDatabase(licenseData: LicenseData): Promise<{ success: boolean; error?: string }> {
+  try {
+    await initLicenseDB(); // Garantir que DB está inicializado
+    
+    // Buscar licença existente ou criar nova
+    let existingLicense = await prisma.license.findFirst();
+    
+    const dbData = {
+      licenseKey: licenseData.licenseKey || null,
+      isValid: true,
+      licenseType: licenseData.isTestVersion ? 'trial' : 
+                  (licenseData.licenseKey?.includes('MASTER') ? 'master' : 'commercial'),
+      expirationDate: licenseData.expiresAt ? new Date(licenseData.expiresAt) : null,
+      lastValidation: new Date(),
+      fingerprint: licenseData.browserFingerprint || null,
+      fingerprintHistory: licenseData.fingerprintHistory || [],
+      suspiciousScore: licenseData.usagePattern?.suspiciousScore || 0,
+      activationDate: new Date(licenseData.createdAt),
+      toleranceMode: false,
+      validationCount: 1,
+      metadata: {
+        deviceInfo: licenseData.deviceInfo,
+        features: licenseData.features,
+        companyName: licenseData.companyName,
+        isTestVersion: licenseData.isTestVersion,
+        usagePattern: licenseData.usagePattern,
+        savedFromLocalStorage: new Date().toISOString()
+      }
+    };
+    
+    if (existingLicense) {
+      await prisma.license.update({
+        where: { id: existingLicense.id },
+        data: {
+          ...dbData,
+          validationCount: existingLicense.validationCount + 1
+        }
+      });
+    } else {
+      await prisma.license.create({ data: dbData });
+    }
+    
+    console.log('✅ Licença salva no banco de dados');
+    return { success: true };
+  } catch (error) {
+    console.error('❌ Erro ao salvar licença no banco:', error);
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : 'Erro desconhecido'
+    };
+  }
+}
+
+export async function loadLicenseFromDatabase(): Promise<LicenseData | null> {
+  try {
+    const license = await prisma.license.findFirst({
+      orderBy: { lastValidation: 'desc' }
+    });
+    
+    if (!license || !license.metadata) return null;
+    
+    // Converter de formato do banco para formato LicenseData
+    const metadata = license.metadata as any;
+    
+    return {
+      browserFingerprint: license.fingerprint || '',
+      licenseKey: license.licenseKey || '',
+      createdAt: license.activationDate.toISOString(),
+      expiresAt: license.expirationDate?.toISOString(),
+      deviceInfo: metadata.deviceInfo || {
+        userAgent: 'Unknown',
+        platform: 'Unknown',
+        language: 'pt',
+        timezone: 'America/Sao_Paulo',
+        screenResolution: '1920x1080'
+      },
+      features: metadata.features || ['all'],
+      companyName: metadata.companyName,
+      isTestVersion: metadata.isTestVersion || license.licenseType === 'trial',
+      fingerprintHistory: Array.isArray(license.fingerprintHistory) ? 
+                         license.fingerprintHistory as string[] : [],
+      usagePattern: metadata.usagePattern
+    };
+  } catch (error) {
+    console.error('❌ Erro ao carregar licença do banco:', error);
+    return null;
+  }
+}
+
+export async function updateLicenseInDatabase(licenseData: Partial<LicenseData>): Promise<{ success: boolean; error?: string }> {
+  try {
+    const existingLicense = await prisma.license.findFirst();
+    
+    if (!existingLicense) {
+      // Se não existe, criar nova usando saveLicenseToDatabase
+      if (licenseData.licenseKey && licenseData.browserFingerprint && licenseData.createdAt) {
+        return await saveLicenseToDatabase(licenseData as LicenseData);
+      } else {
+        return { success: false, error: 'Dados insuficientes para criar licença' };
+      }
+    }
+    
+    // Atualizar licença existente
+    const updateData: any = {
+      lastValidation: new Date(),
+      validationCount: existingLicense.validationCount + 1
+    };
+    
+    if (licenseData.browserFingerprint !== undefined) {
+      updateData.fingerprint = licenseData.browserFingerprint;
+    }
+    
+    if (licenseData.fingerprintHistory !== undefined) {
+      updateData.fingerprintHistory = licenseData.fingerprintHistory;
+    }
+    
+    if (licenseData.usagePattern !== undefined) {
+      const currentMetadata = existingLicense.metadata as any || {};
+      updateData.metadata = {
+        ...currentMetadata,
+        usagePattern: licenseData.usagePattern
+      };
+      updateData.suspiciousScore = licenseData.usagePattern.suspiciousScore || 0;
+    }
+    
+    await prisma.license.update({
+      where: { id: existingLicense.id },
+      data: updateData
+    });
+    
+    console.log('✅ Licença atualizada no banco');
+    return { success: true };
+  } catch (error) {
+    console.error('❌ Erro ao atualizar licença no banco:', error);
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : 'Erro desconhecido'
+    };
+  }
+}
+
+export async function removeLicenseFromDatabase(): Promise<{ success: boolean; error?: string }> {
+  try {
+    await prisma.license.deleteMany({}); // Remove todas as licenças
+    console.log('✅ Licenças removidas do banco');
+    return { success: true };
+  } catch (error) {
+    console.error('❌ Erro ao remover licenças do banco:', error);
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : 'Erro desconhecido'
+    };
+  }
+}
+
+// =====================================
+// FUNÇÕES DE INICIALIZAÇÃO
+// =====================================
+
+export async function initDB() {
+  try {
+    console.log('🔧 Iniciando banco de dados...');
+    
+    // Garante que existe pelo menos um representante
+    await getOrCreateDefaultRepresentative();
+    
+    // Garante que sistema de licenciamento está inicializado
+    await initLicenseDB();
+    
+    console.log('✅ Banco de dados inicializado com sucesso');
+    
+    return { success: true };
+  } catch (error) {
+    console.error('❌ Erro ao inicializar banco:', error);
+    return { 
+      success: false,
+      error: error instanceof Error ? error.message : 'Erro desconhecido'
+    };
+  }
+}
+
+// =====================================
+// FUNÇÕES DE LIMPEZA
+// =====================================
+
+export async function closeDB() {
+  try {
+    await prisma.$disconnect();
+    console.log('✅ Conexão com banco fechada');
+    return { success: true };
+  } catch (error) {
+    console.error('❌ Erro ao fechar conexão:', error);
+    return { 
+      success: false,
+      error: error instanceof Error ? error.message : 'Erro desconhecido'
+    };
+  }
+}

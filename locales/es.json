@@ -1,0 +1,296 @@
+{
+  "common": {
+    "welcome": "Bienvenido",
+    "loading": "Cargando...",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "view": "Ver",
+    "create": "Crear",
+    "update": "Actualizar",
+    "search": "Buscar",
+    "filter": "Filtrar",
+    "clear": "Limpiar",
+    "close": "Cerrar",
+    "open": "Abrir",
+    "yes": "Sí",
+    "no": "No",
+    "ok": "OK",
+    "error": "Error",
+    "success": "Éxito",
+    "warning": "Advertencia",
+    "info": "Información",
+    "confirm": "Confirmar",
+    "back": "Volver",
+    "next": "Siguiente",
+    "previous": "Anterior",
+    "finish": "Finalizar",
+    "submit": "Enviar",
+    "reset": "Reiniciar",
+    "refresh": "Actualizar",
+    "export": "Exportar",
+    "import": "Importar",
+    "print": "Imprimir",
+    "help": "Ayuda",
+    "settings": "Configuraciones",
+    "profile": "Perfil",
+    "logout": "Salir",
+    "login": "Entrar",
+    "register": "Registrar",
+    "total": "Total",
+    "subtotal": "Subtotal",
+    "required": "Obligatorio",
+    "optional": "Opcional",
+    "active": "Activo",
+    "inactive": "Inactivo",
+    "enabled": "Habilitado",
+    "disabled": "Deshabilitado",
+    "available": "Disponible",
+    "unavailable": "No disponible",
+    "processing": "Procesando...",
+    "completed": "Completado",
+    "pending": "Pendiente",
+    "approved": "Aprobado",
+    "rejected": "Rechazado",
+    "draft": "Borrador",
+    "published": "Publicado",
+    "archived": "Archivado",
+    "tryAgain": "Intentar de Nuevo",
+    "backToList": "Volver a la Lista"
+  },
+  "appName": "Sales Representative App",
+  "app": {
+    "name": "Sales Representative App",
+    "version": "4.3",
+    "description": "Sistema de Gestión para Representantes Comerciales",
+    "company": "Sales Rep Solutions",
+    "copyright": "© 2024 Sales Rep Solutions. Todos los derechos reservados.",
+    "license": "Licencia Comercial",
+    "support": "Soporte Técnico",
+    "documentation": "Documentación",
+    "training": "Entrenamiento",
+    "updates": "Actualizaciones"
+  },
+  "nav": {
+    "dashboard": "Panel",
+    "sales": "Ventas",
+    "clients": "Clientes",
+    "newClient": "Nuevo Cliente",
+    "home": "Inicio",
+    "menu": "Menú",
+    "edit": "Editar",
+    "editClient": "Editar Cliente"
+  },
+  "navigation": {
+    "dashboard": "Panel",
+    "sales": "Ventas",
+    "customers": "Clientes",
+    "products": "Productos",
+    "companies": "Empresas",
+    "targets": "Metas",
+    "planning": "Planificación",
+    "calendar": "Calendario",
+    "reports": "Reportes",
+    "cashFlow": "Flujo de Caja",
+    "settings": "Configuraciones",
+    "profile": "Perfil",
+    "home": "Inicio",
+    "menu": "Menú"
+  },
+  "language": {
+    "label": "Idioma"
+  },
+  "dashboard": {
+    "title": "Panel de Control",
+    "subtitle": "Visión general de tus datos de clientes y métricas",
+    "loading": "Cargando panel...",
+    "welcome": "Bienvenido a Sales Representative",
+    "quickStats": "Estadísticas Rápidas",
+    "recentActivities": "Actividades Recientes",
+    "topPerformers": "Mejores Performers",
+    "monthlyGoals": "Metas Mensuales",
+    "weeklyProgress": "Progreso Semanal",
+    "todaysSales": "Ventas de Hoy",
+    "totalRevenue": "Ingresos Totales",
+    "newCustomers": "Nuevos Clientes",
+    "activeDeals": "Negocios Activos",
+    "conversionRate": "Tasa de Conversión",
+    "averageTicket": "Ticket Promedio",
+    "recentClients": "Clientes Recientes",
+    "recentSales": "Ventas Recientes",
+    "viewAll": "Ver Todos",
+    "noRecentClients": "Ningún cliente reciente",
+    "noRecentSales": "Ninguna venta reciente",
+    "error": {
+      "title": "Error al Cargar Panel"
+    },
+    "stats": {
+      "total": "Total de Clientes",
+      "individual": "Individual",
+      "business": "Empresa"
+    },
+    "clients": {
+      "title": "Análisis de Clientes"
+    },
+    "sales": {
+      "title": "Análisis de Ventas",
+      "totalSales": "Total de Ventas",
+      "totalRevenue": "Ingresos Totales",
+      "totalCommission": "Comisión Total",
+      "paid": "Pagadas",
+      "pending": "Pendientes",
+      "averageTicket": "Ticket Promedio",
+      "summary": "Resumen de Ventas",
+      "topStates": "Top Regiones por Ingresos",
+      "commission": "Detalle de Comisiones",
+      "rsCommission": "Comisión Región",
+      "avgCommission": "Comisión Promedio"
+    },
+    "charts": {
+      "byState": "Clientes por Región",
+      "byType": "Individual vs Empresa",
+      "growth": "Crecimiento de Clientes",
+      "noData": "Ningún dato disponible",
+      "invalidData": "Formato de datos inválido",
+      "noGrowthData": "Ningún dato de crecimiento disponible",
+      "noClients": "Ningún cliente para mostrar",
+      "client": "cliente",
+      "otherStates": "Otras Regiones",
+      "individual": "Individual",
+      "business": "Empresa",
+      "newClients": "Nuevos clientes",
+      "totalClients": "Total de clientes",
+      "newClientsPerMonth": "Nuevos Clientes por Mes",
+      "cumulativeGrowth": "Crecimiento Acumulado"
+    }
+  },
+  "clients": {
+    "title": "Gestión de Clientes",
+    "subtitle": "Gestiona todos tus clientes registrados",
+    "loading": "Cargando clientes...",
+    "total": "Total de Clientes",
+    "list": {
+      "title": "Lista de Clientes",
+      "clientsCount": "clientes",
+      "noClients": "Ningún cliente registrado aún",
+      "createFirst": "Comienza creando tu primer cliente para verlo aquí.",
+      "createFirstButton": "Crear Primer Cliente",
+      "deleteConfirm": "Eliminar cliente"
+    },
+    "form": {
+      "title": "Nuevo Cliente",
+      "subtitle": "Completa la información abajo para registrar un nuevo cliente"
+    },
+    "edit": {
+      "title": "Editar Cliente",
+      "subtitle": "Actualiza la información del cliente y guarda los cambios.",
+      "loading": "Cargando datos del cliente...",
+      "formTitle": "Editar",
+      "error": {
+        "title": "Error al Cargar Cliente",
+        "notFound": "Cliente no encontrado o no pudo ser cargado."
+      }
+    }
+  },
+  "sales": {
+    "title": "Gestión de Ventas",
+    "subtitle": "Gestiona todas tus ventas y comisiones",
+    "newSale": "Nueva Venta",
+    "newSaleSubtitle": "Registra una nueva venta y calcula tu comisión automáticamente",
+    "loading": "Cargando ventas...",
+    "noSales": "Ninguna venta registrada aún",
+    "createFirst": "Comienza registrando tu primera venta para verla aquí.",
+    "createFirstSale": "Registrar Primera Venta",
+    "deleteConfirm": "Eliminar venta",
+    "stats": {
+      "totalSales": "Total de Ventas",
+      "totalRevenue": "Ingresos Totales",
+      "totalCommission": "Comisión Total",
+      "pending": "Pendientes",
+      "paid": "Pagadas"
+    },
+    "list": {
+      "title": "Lista de Ventas",
+      "salesCount": "ventas"
+    },
+    "edit": {
+      "title": "Editar Venta",
+      "subtitle": "Actualiza la información de la venta y guarda los cambios.",
+      "loading": "Cargando datos de la venta...",
+      "formTitle": "Editar",
+      "error": {
+        "title": "Error al Cargar Venta",
+        "notFound": "Venta no encontrada o no pudo ser cargada."
+      }
+    }
+  },
+  "forms": {
+    "validation": {
+      "required": "Este campo es obligatorio",
+      "email": "Ingresa un email válido",
+      "phone": "Ingresa un teléfono válido",
+      "cpf": "Ingresa un documento válido",
+      "cnpj": "Ingresa un código fiscal válido",
+      "minLength": "Mínimo {{count}} caracteres",
+      "maxLength": "Máximo {{count}} caracteres",
+      "min": "Valor mínimo: {{value}}",
+      "max": "Valor máximo: {{value}}",
+      "pattern": "Formato inválido",
+      "unique": "Este valor ya existe",
+      "date": "Ingresa una fecha válida",
+      "url": "Ingresa una URL válida",
+      "number": "Ingresa un número válido",
+      "integer": "Ingresa un número entero",
+      "decimal": "Ingresa un número decimal válido",
+      "currency": "Ingresa un valor monetario válido",
+      "percentage": "Ingresa un porcentaje válido",
+      "zip": "Ingresa un código postal válido",
+      "password": "La contraseña debe tener al menos 8 caracteres",
+      "passwordMatch": "Las contraseñas no coinciden"
+    }
+  },
+  "messages": {
+    "success": {
+      "created": "¡Creado con éxito!",
+      "updated": "¡Actualizado con éxito!",
+      "deleted": "¡Eliminado con éxito!",
+      "saved": "¡Guardado con éxito!",
+      "sent": "¡Enviado con éxito!",
+      "completed": "¡Completado con éxito!"
+    },
+    "error": {
+      "general": "Ocurrió un error inesperado",
+      "network": "Error de conexión",
+      "timeout": "Tiempo agotado",
+      "notFound": "No encontrado",
+      "unauthorized": "No autorizado",
+      "forbidden": "Acceso denegado",
+      "validation": "Error de validación"
+    },
+    "confirmation": {
+      "delete": "¿Estás seguro de que quieres eliminar?",
+      "save": "¿Estás seguro de que quieres guardar?",
+      "cancel": "¿Estás seguro de que quieres cancelar?"
+    }
+  },
+  "regions": {
+    "region": "Región",
+    "state": "Estado",
+    "province": "Provincia",
+    "city": "Ciudad",
+    "country": "País"
+  },
+  "system": {
+    "configureRegions": "Configurar Regiones",
+    "addRegion": "Agregar Región",
+    "defaultRegion": "Región Predeterminada",
+    "regionSettings": "Configuración de Regiones"
+  },
+  "currency": {
+    "symbol": "€",
+    "code": "EUR",
+    "name": "Euro",
+    "format": "€ #,##0.00"
+  }
+}

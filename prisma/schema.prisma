@@ -1,0 +1,81 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model License {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  type        String   // trial, standard, premium, enterprise
+  status      String   @default("active") // active, expired, revoked, suspended
+  expiryDate  DateTime?
+  maxUsers    Int      @default(1)
+  features    String   // JSON string com features habilitadas
+  issuedTo    String?  // nome/empresa
+  issuedAt    DateTime @default(now())
+  lastCheck   DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("licenses")
+}
+
+model Client {
+  id        String   @id @default(cuid())
+  name      String
+  email     String?
+  phone     String?
+  company   String?
+  address   String?
+  city      String?
+  state     String?
+  zipCode   String?
+  notes     String?
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  receivables Receivable[]
+  
+  @@map("clients")
+}
+
+model Receivable {
+  id           String   @id @default(cuid())
+  clientId     String
+  customerName String
+  amount       Float
+  dueDate      DateTime
+  status       String   @default("pending")
+  description  String?
+  notes        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  client       Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  
+  @@map("receivables")
+}
+
+model Goal {
+  id            String   @id @default(cuid())
+  title         String
+  periodType    String
+  periodStart   DateTime
+  periodEnd     DateTime
+  targetAmount  Float
+  targetSales   Int?
+  currentAmount Float    @default(0)
+  currentSales  Int      @default(0)
+  status        String   @default("active")
+  description   String?
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  @@map("goals")
+}

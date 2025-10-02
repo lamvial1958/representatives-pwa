@@ -1,0 +1,166 @@
+{
+    "name":  "representatives_app",
+    "version":  "4.3.0",
+    "private":  true,
+    "description":  "Sales Representative App - Sistema de gestÃ£o para representantes comerciais",
+    "author":  "Sales Rep Solutions",
+    "main":  "public/electron.js",
+    "homepage":  "./",
+    "scripts":  {
+                    "dev":  "next dev",
+                    "build":  "prisma generate \u0026\u0026 next build",
+                    "start":  "next start",
+                    "lint":  "next lint",
+                    "db:generate":  "prisma generate",
+                    "db:push":  "prisma db push",
+                    "db:migrate":  "prisma migrate dev",
+                    "db:reset":  "prisma migrate reset",
+                    "db:seed":  "node scripts/seed.js",
+                    "electron":  "concurrently \"npm run dev\" \"wait-on http://localhost:3000 \u0026\u0026 electron .\"",
+                    "electron-dev":  "cross-env ELECTRON_IS_DEV=true electron .",
+                    "build-electron":  "npm run build \u0026\u0026 electron-builder build",
+                    "dist":  "npm run build \u0026\u0026 electron-builder --publish=never",
+                    "pack":  "electron-builder --dir",
+                    "build-all":  "electron-builder -mwl",
+                    "build-win":  "electron-builder --win",
+                    "build-mac":  "electron-builder --mac",
+                    "build-linux":  "electron-builder --linux",
+                    "postinstall-clean":  "node -e \"try{const fs=require(\u0027fs\u0027),path=require(\u0027path\u0027),sharp=path.join(__dirname,\u0027node_modules\u0027,\u0027@img\u0027);if(fs.existsSync(sharp)){const dirs=fs.readdirSync(sharp).filter(d=\u003ed.includes(\u0027darwin\u0027));dirs.forEach(d=\u003efs.rmSync(path.join(sharp,d),{recursive:true,force:true}));console.log(\u0027Sharp Darwin cleaned\u0027);}}catch(e){console.log(\u0027Sharp clean skipped\u0027)}\"",
+                    "postinstall":  "node -e \"try{const fs=require(\u0027fs\u0027),path=require(\u0027path\u0027);[\u0027@img/sharp-darwin-arm64\u0027,\u0027@img/sharp-darwin-x64\u0027,\u0027@img/sharp-linux-arm64\u0027].forEach(p=\u003e{const dir=path.join(\u0027node_modules\u0027,p);if(fs.existsSync(dir))fs.rmSync(dir,{recursive:true,force:true})});console.log(\u0027✅ Sharp platforms cleaned\u0027)}catch(e){console.log(\u0027⚠️ Sharp clean skipped:\u0027,e.message)}\""
+                },
+    "dependencies":  {
+                         "@prisma/client":  "^5.22.0",
+                         "chart.js":  "^4.5.0",
+                         "crypto-js":  "^4.2.0",
+                         "date-fns":  "^4.1.0",
+                         "i18next":  "^25.3.2",
+                         "i18next-browser-languagedetector":  "^8.2.0",
+                         "lucide-react":  "^0.525.0",
+                         "next":  "15.4.3",
+                         "node-machine-id":  "^1.1.12",
+                         "react":  "19.1.0",
+                         "react-chartjs-2":  "^5.3.0",
+                         "react-dom":  "19.1.0",
+                         "react-hook-form":  "^7.60.0",
+                         "react-i18next":  "^15.6.1",
+                         "recharts":  "^3.1.0",
+                         "systeminformation":  "^5.21.15",
+                         "uuid":  "^11.1.0"
+                     },
+    "devDependencies":  {
+                            "@eslint/eslintrc":  "^3",
+                            "@tailwindcss/postcss":  "^4",
+                            "@types/crypto-js":  "^4.2.1",
+                            "@types/node":  "^20",
+                            "@types/react":  "^19",
+                            "@types/react-dom":  "^19",
+                            "@types/uuid":  "^10.0.0",
+                            "concurrently":  "^9.2.0",
+                            "cross-env":  "^7.0.3",
+                            "electron":  "^37.2.4",
+                            "electron-builder":  "^26.0.12",
+                            "eslint":  "^9",
+                            "eslint-config-next":  "15.4.3",
+                            "prisma":  "^5.22.0",
+                            "tailwindcss":  "^4",
+                            "typescript":  "^5",
+                            "wait-on":  "^8.0.4"
+                        },
+    "engines":  {
+                    "node":  "\u003e=18.0.0",
+                    "npm":  "\u003e=8.0.0"
+                },
+    "keywords":  [
+                     "sales",
+                     "representative",
+                     "crm",
+                     "electron",
+                     "nextjs",
+                     "business"
+                 ],
+    "license":  "MIT",
+    "build":  {
+                  "appId":  "com.salesrep.representatives-app",
+                  "productName":  "Sales Representative App",
+                  "directories":  {
+                                      "output":  "dist",
+                                      "buildResources":  "build-resources"
+                                  },
+                  "files":  [
+                                ".next/**/*",
+                                "public/electron.js",
+                                "public/preload.js",
+                                "public/license-manager.js",
+                                "node_modules/**/*",
+                                "package.json"
+                            ],
+                  "win":  {
+                              "target":  [
+                                             {
+                                                 "target":  "nsis",
+                                                 "arch":  [
+                                                              "x64"
+                                                          ]
+                                             }
+                                         ],
+                              "icon":  "public/icon.ico",
+                              "artifactName":  "${productName}-${version}-win-${arch}.${ext}",
+                              "requestedExecutionLevel":  "asInvoker"
+                          },
+                  "nsis":  {
+                               "oneClick":  false,
+                               "allowElevation":  true,
+                               "allowToChangeInstallationDirectory":  true,
+                               "createDesktopShortcut":  true,
+                               "createStartMenuShortcut":  true,
+                               "runAfterFinish":  true,
+                               "menuCategory":  "Office"
+                           },
+                  "mac":  {
+                              "target":  [
+                                             {
+                                                 "target":  "dmg",
+                                                 "arch":  [
+                                                              "x64",
+                                                              "arm64"
+                                                          ]
+                                             }
+                                         ],
+                              "icon":  "public/icon.icns",
+                              "category":  "public.app-category.business",
+                              "artifactName":  "${productName}-${version}-mac-${arch}.${ext}"
+                          },
+                  "linux":  {
+                                "target":  [
+                                               {
+                                                   "target":  "AppImage",
+                                                   "arch":  [
+                                                                "x64"
+                                                            ]
+                                               },
+                                               {
+                                                   "target":  "deb",
+                                                   "arch":  [
+                                                                "x64"
+                                                            ]
+                                               }
+                                           ],
+                                "icon":  "public/icon.png",
+                                "category":  "Office",
+                                "artifactName":  "${productName}-${version}-linux-${arch}.${ext}"
+                            },
+                  "compression":  "maximum",
+                  "copyright":  "Â© 2024 Sales Rep Solutions",
+                  "extraFiles":  [
+
+                                 ],
+                  "asarUnpack":  [
+
+                                 ]
+              },
+    "resolutions":  {
+                        "@img/sharp-darwin-x64":  "npm:@img/sharp-win32-x64@*",
+                        "sharp":  "0.32.6",
+                        "@img/sharp-darwin-arm64":  "npm:@img/sharp-win32-x64@*"
+                    }
+}
