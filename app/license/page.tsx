@@ -225,7 +225,7 @@ export default function LicensePage() {
                   <div>
                     <label className="text-sm font-medium text-gray-600">Data de Expiração</label>
                     <div className="mt-1 text-lg font-bold text-gray-900">
-                      {licenseData.isLifetime ? 'Sem expiração' : formatDate(licenseData.expiryDate)}
+                      {licenseData.isLifetime ? 'Sem expiração' : formatDate(licenseData.expiryDate || null)}
                     </div>
                   </div>
 
