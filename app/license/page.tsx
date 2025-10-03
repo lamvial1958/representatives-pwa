@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect } from 'react';
 import { LicenseManager } from '@/lib/license-manager';
@@ -439,3 +439,4 @@ export default function LicensePage() {
     </div>
   );
 }
+
