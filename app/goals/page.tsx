@@ -228,13 +228,13 @@ export default function GoalsPage() {
                   <div className="flex justify-between items-start mb-4">
                     <div>
                       <h3 className="text-xl font-bold mb-1">
-                        {goal.periodType === 'monthly' ? '📅 Meta Mensal' :
-                         goal.periodType === 'weekly' ? '📊 Meta Semanal' :
-                         goal.periodType === 'daily' ? '⚡ Meta Diária' :
+                        {(goal as any).periodType === 'monthly' ? '📅 Meta Mensal' :
+                         (goal as any).periodType === 'weekly' ? '📊 Meta Semanal' :
+                         (goal as any).periodType === 'daily' ? '⚡ Meta Diária' :
                          '🎯 Meta Personalizada'}
                       </h3>
                       <p className="text-blue-100 text-sm">
-                        {new Date(goal.periodStart).toLocaleDateString('pt-BR')} - {new Date(goal.periodEnd).toLocaleDateString('pt-BR')}
+                        {new Date((goal as any).periodStart).toLocaleDateString('pt-BR')} - {new Date((goal as any).periodEnd).toLocaleDateString('pt-BR')}
                       </p>
                     </div>
                     <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(goal.status)}`}>
@@ -274,12 +274,12 @@ export default function GoalsPage() {
                         R$ {(goal as any).targetAmount.toLocaleString('pt-BR')}
                       </p>
                     </div>
-                    {goal.targetSales && (
+                    {(goal as any).targetSales && (
                       <div className="text-center p-3 bg-blue-50 rounded-lg">
                         <div className="text-xl mb-1">📊</div>
                         <p className="text-xs text-gray-600">Meta Vendas</p>
                         <p className="font-bold text-blue-600 text-sm">
-                          {goal.currentSales}/{goal.targetSales}
+                          {(goal as any).currentSales}/{(goal as any).targetSales}
                         </p>
                       </div>
                     )}
@@ -298,11 +298,11 @@ export default function GoalsPage() {
                       onClick={() => {
                         setEditingGoal(goal);
                         setFormData({
-                          period_type: goal.periodType,
-                          period_start: goal.periodStart,
-                          period_end: goal.periodEnd,
+                          period_type: (goal as any).periodType,
+                          period_start: (goal as any).periodStart,
+                          period_end: (goal as any).periodEnd,
                           target_amount: (goal as any).targetAmount,
-                          target_sales: goal.targetSales,
+                          target_sales: (goal as any).targetSales,
                           notes: goal.notes || ''
                         });
                         setShowCreateModal(true);
@@ -479,5 +479,6 @@ export default function GoalsPage() {
     </div>
   );
 }
+
 
 
