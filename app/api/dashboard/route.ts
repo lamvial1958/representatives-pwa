@@ -78,7 +78,14 @@ export async function GET() {
       prisma.receivable.findMany({
         take: 10,
         orderBy: { createdAt: 'desc' },
-        include: {
+        select: {
+          id: true,
+          customerName: true,
+          amount: true,
+          dueDate: true,
+          status: true,
+          createdAt: true,
+          commissionRate: true,
           client: { select: { name: true, company: true } }
         }
       }),
@@ -273,6 +280,7 @@ export async function GET() {
     )
   }
 }
+
 
 
 
