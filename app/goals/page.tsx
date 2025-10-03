@@ -134,8 +134,8 @@ export default function GoalsPage() {
   };
 
   const getProgressPercentage = (goal: Goal) => {
-    if (goal.targetAmount === 0) return 0;
-    return Math.min((goal.currentAmount / goal.targetAmount) * 100, 100);
+    if ((goal as any).targetAmount === 0) return 0;
+    return Math.min(((goal as any).currentAmount / (goal as any).targetAmount) * 100, 100);
   };
 
   const getStatusColor = (status: string) => {
@@ -260,8 +260,8 @@ export default function GoalsPage() {
                       ></div>
                     </div>
                     <div className="flex justify-between text-xs text-gray-500 mt-1">
-                      <span>R$ {goal.currentAmount.toLocaleString('pt-BR')}</span>
-                      <span>R$ {goal.targetAmount.toLocaleString('pt-BR')}</span>
+                      <span>R$ {(goal as any).currentAmount.toLocaleString('pt-BR')}</span>
+                      <span>R$ {(goal as any).targetAmount.toLocaleString('pt-BR')}</span>
                     </div>
                   </div>
 
@@ -271,7 +271,7 @@ export default function GoalsPage() {
                       <div className="text-xl mb-1">💰</div>
                       <p className="text-xs text-gray-600">Meta Receita</p>
                       <p className="font-bold text-green-600 text-sm">
-                        R$ {goal.targetAmount.toLocaleString('pt-BR')}
+                        R$ {(goal as any).targetAmount.toLocaleString('pt-BR')}
                       </p>
                     </div>
                     {goal.targetSales && (
@@ -301,7 +301,7 @@ export default function GoalsPage() {
                           period_type: goal.periodType,
                           period_start: goal.periodStart,
                           period_end: goal.periodEnd,
-                          target_amount: goal.targetAmount,
+                          target_amount: (goal as any).targetAmount,
                           target_sales: goal.targetSales,
                           notes: goal.notes || ''
                         });
@@ -479,4 +479,5 @@ export default function GoalsPage() {
     </div>
   );
 }
+
 
