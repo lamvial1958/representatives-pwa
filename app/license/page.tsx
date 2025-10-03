@@ -17,7 +17,65 @@ interface LicenseData {
   features: string[];
   isValid: boolean;
   isLifetime?: boolean;
+  deviceId?: string;
 }
+
+// Gerar fingerprint baseado em hardware físico
+const generateDeviceFingerprint = () => {
+  // Canvas fingerprint (GPU física)
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  if (ctx) {
+    ctx.textBaseline = 'top';
+    ctx.font = '14px Arial';
+    ctx.fillText('Hardware ID', 2, 2);
+  }
+  
+  const hardwareData = [
+    screen.width + 'x' + screen.height + 'x' + screen.colorDepth, // Monitor físico
+    navigator.hardwareConcurrency || 'unknown',                  // CPU cores
+    new Date().getTimezoneOffset(),                              // Localização física
+    navigator.platform,                                          // OS/arquitetura
+    canvas.toDataURL().substring(0, 50)                         // GPU fingerprint
+  ].join('|');
+  
+  return btoa(hardwareData).substring(0, 32);
+};
+
+// Validar licença com controle de hardware
+const validateLicense = (key: string) => {
+  const validLicenses = [
+    'FULL-LICENSE-2024-PREMIUM',
+    'FULL-LICENSE-2024-ULTIMATE'
+  ];
+  
+  if (!validLicenses.includes(key)) {
+    return { isValid: false, message: 'Licença inválida' };
+  }
+
+  const deviceId = generateDeviceFingerprint();
+  const storageKey = `license-${key}`;
+  const storedDevice = localStorage.getItem(storageKey);
+  
+  if (storedDevice && storedDevice !== deviceId) {
+    return { 
+      isValid: false, 
+      message: 'Esta licença já foi ativada em outro dispositivo. Licenças são pessoais e intransferíveis.' 
+    };
+  }
+  
+  // Primeira ativação - vincular ao dispositivo
+  if (!storedDevice) {
+    localStorage.setItem(storageKey, deviceId);
+  }
+  
+  return { 
+    isValid: true, 
+    message: 'Licença ativada com sucesso!',
+    isLifetime: true,
+    deviceId: deviceId.substring(0, 8)
+  };
+};
 
 export default function LicensePage() {
   const { t } = useTranslation();
@@ -34,6 +92,15 @@ export default function LicensePage() {
       setLoading(true);
       const manager = LicenseManager.getInstance();
       const license = await manager.getLicense();
+      
+      // Adicionar deviceId se licença existir
+      if (license && license.key) {
+        const validation = validateLicense(license.key);
+        if (validation.isValid && validation.deviceId) {
+          license.deviceId = validation.deviceId;
+        }
+      }
+      
       setLicenseData(license);
     } catch (error) {
       console.error('Erro ao carregar licença:', error);
@@ -55,16 +122,24 @@ export default function LicensePage() {
         return;
       }
 
+      // Validar licença com controle de hardware
+      const validation = validateLicense(newLicenseKey.trim());
+      
+      if (!validation.isValid) {
+        setError(validation.message);
+        return;
+      }
+
       const manager = LicenseManager.getInstance();
       const result = await manager.activateLicense(newLicenseKey.trim(), issuedTo.trim() || undefined);
       
       if (result) {
-        setSuccess('Licença ativada com sucesso!');
+        setSuccess(`${validation.message} Device ID: ${validation.deviceId}`);
         setNewLicenseKey('');
         setIssuedTo('');
         await loadLicense();
       } else {
-        setError('Chave de licença inválida');
+        setError('Erro interno ao ativar a licença');
       }
     } catch (error) {
       console.error('Erro ao ativar licença:', error);
@@ -131,14 +206,14 @@ export default function LicensePage() {
         <Breadcrumbs
           items={[
             { label: t('nav.home', 'Início'), href: '/', icon: '🏠' },
-            { label: t('nav.license', 'Licença'), href: '/license', icon: '📋' }
+            { label: t('nav.license', 'Licença'), href: '/license', icon: '🔑' }
           ]}
         />
 
         {/* Header */}
         <div className="text-center mb-12">
           <h1 className="text-5xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-green-600 bg-clip-text text-transparent mb-4">
-            📋 Gerenciamento de Licença
+            🔑 Gerenciamento de Licença
           </h1>
           <p className="text-gray-600 text-xl max-w-2xl mx-auto">
             Controle e ative sua licença do sistema de representantes
@@ -163,7 +238,7 @@ export default function LicensePage() {
         <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
           <div className="bg-gradient-to-r from-indigo-500 to-purple-600 p-6">
             <h2 className="text-xl font-bold text-white flex items-center">
-              <span className="mr-3 text-2xl">🔑</span>
+              <span className="mr-3 text-2xl">📋</span>
               Status da Licença
             </h2>
           </div>
@@ -203,6 +278,16 @@ export default function LicensePage() {
                       {licenseData.isLifetime ? 'Vitalícia' : `${licenseData.daysRemaining} dias`}
                     </div>
                   </div>
+
+                  {licenseData.deviceId && (
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">ID do Dispositivo</label>
+                      <div className="mt-1 font-mono text-sm text-gray-700 bg-yellow-50 p-2 rounded border">
+                        🔒 {licenseData.deviceId}
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1">Licença vinculada a este dispositivo</p>
+                    </div>
+                  )}
                 </div>
 
                 <div className="space-y-4">
@@ -251,7 +336,7 @@ export default function LicensePage() {
               </div>
             ) : (
               <div className="text-center py-8">
-                <div className="text-gray-400 text-6xl mb-4">🔒</div>
+                <div className="text-gray-400 text-6xl mb-4">🔓</div>
                 <h3 className="text-xl font-bold text-gray-900 mb-2">Nenhuma licença ativa</h3>
                 <p className="text-gray-600">
                   Você está usando a versão de avaliação limitada do sistema.
@@ -281,7 +366,7 @@ export default function LicensePage() {
                   id="licenseKey"
                   value={newLicenseKey}
                   onChange={(e) => setNewLicenseKey(e.target.value)}
-                  placeholder="XXXX-XXXX-XXXX-XXXX"
+                  placeholder="FULL-LICENSE-2024-PREMIUM"
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono"
                   disabled={activating}
                 />
@@ -311,6 +396,20 @@ export default function LicensePage() {
               </button>
             </form>
 
+            {/* Security Notice */}
+            <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <h3 className="text-sm font-bold text-yellow-800 flex items-center mb-2">
+                <span className="mr-2">🔒</span>
+                Licença Pessoal e Intransferível
+              </h3>
+              <div className="space-y-1 text-xs text-yellow-700">
+                <p>• A licença será vinculada permanentemente a este dispositivo</p>
+                <p>• Não poderá ser usada em outros computadores/dispositivos</p>
+                <p>• Baseado em características únicas do seu hardware</p>
+                <p>• Flexível a atualizações de navegador e sistema operacional</p>
+              </div>
+            </div>
+
             {/* Help Section */}
             <div className="mt-8 p-6 bg-gray-50 rounded-lg">
               <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center">
@@ -319,8 +418,9 @@ export default function LicensePage() {
               </h3>
               <div className="space-y-2 text-sm text-gray-600">
                 <p>• Entre em contato com o desenvolvedor para adquirir uma licença</p>
-                <p>• Licenças válidas seguem o formato: XXXX-XXXX-XXXX-XXXX</p>
+                <p>• Licenças válidas: FULL-LICENSE-2024-PREMIUM ou FULL-LICENSE-2024-ULTIMATE</p>
                 <p>• Após a ativação, todas as funcionalidades serão desbloqueadas</p>
+                <p>• Licenças são vitalícias e vinculadas ao seu dispositivo</p>
               </div>
             </div>
           </div>

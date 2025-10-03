@@ -95,11 +95,19 @@ export default function DashboardPage() {
     fetchDashboardData();
   }, []);
 
-  const formatCurrency = (value: number) => {
+  const formatCurrency = (value: number | string) => {
+    // Converter para número se for string
+    const numValue = typeof value === 'string' ? parseFloat(value) || 0 : value;
+    
+    // Verificar se é um número válido
+    if (typeof numValue !== 'number' || isNaN(numValue)) {
+      return 'R$ 0,00';
+    }
+    
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
       currency: 'BRL'
-    }).format(value);
+    }).format(numValue);
   };
 
   const formatPercentage = (value: number) => {
@@ -363,7 +371,7 @@ export default function DashboardPage() {
                   {dashboardData.recentSales.map((sale) => (
                     <tr key={sale.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="font-medium text-gray-900">{sale.client}</div>
+                        <div className="font-medium text-gray-900">{sale.client?.name || sale.client}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-lg font-bold text-green-600">
@@ -387,7 +395,7 @@ export default function DashboardPage() {
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {new Date(sale.date).toLocaleDateString('pt-BR')}
+                        {new Date(sale.createdAt).toLocaleDateString('pt-BR')}
                       </td>
                     </tr>
                   ))}
@@ -426,7 +434,7 @@ export default function DashboardPage() {
                       <div>
                         <p className="text-sm text-gray-600">Última Compra</p>
                         <p className="text-sm font-medium text-gray-800">
-                          {new Date(client.lastPurchase).toLocaleDateString('pt-BR')}
+                          {new Date(client.createdAt).toLocaleDateString('pt-BR')}
                         </p>
                       </div>
                     </div>
@@ -558,3 +566,4 @@ export default function DashboardPage() {
     </div>
   );
 }
+

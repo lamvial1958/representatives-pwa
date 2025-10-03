@@ -3,17 +3,17 @@ import { PrismaClient } from '@prisma/client'
 const prisma = new PrismaClient()
 
 async function seed() {
-  console.log('?? Criando dados de exemplo...')
+  console.log('🌱 Criando dados de exemplo...')
 
   // Criar clientes exemplo
   const clients = await Promise.all([
     prisma.client.create({
       data: {
-        name: 'Jo?o Silva',
+        name: 'João Silva',
         email: 'joao.silva@email.com',
         phone: '(11) 99999-1234',
         company: 'Silva & Cia',
-        city: 'S?o Paulo',
+        city: 'São Paulo',
         state: 'SP'
       }
     }),
@@ -32,14 +32,14 @@ async function seed() {
         name: 'Pedro Costa',
         email: 'pedro@costa.com.br',
         phone: '(31) 97777-9012',
-        company: 'Costa Neg?cios',
+        company: 'Costa Negócios',
         city: 'Belo Horizonte',
         state: 'MG'
       }
     })
   ])
 
-  console.log(`? ${clients.length} clientes criados`)
+  console.log(`✅ ${clients.length} clientes criados`)
 
   // Criar receivables
   const receivables = await Promise.all([
@@ -60,7 +60,7 @@ async function seed() {
         amount: 3500.50,
         dueDate: new Date('2024-12-10'),
         status: 'overdue',
-        description: 'Servi?os prestados'
+        description: 'Serviços prestados'
       }
     }),
     prisma.receivable.create({
@@ -75,7 +75,7 @@ async function seed() {
     })
   ])
 
-  console.log(`? ${receivables.length} receivables criados`)
+  console.log(`✅ ${receivables.length} receivables criados`)
 
   // Criar goals
   const goals = await Promise.all([
@@ -109,8 +109,8 @@ async function seed() {
     })
   ])
 
-  console.log(`? ${goals.length} goals criados`)
-  console.log('?? Seed completo!')
+  console.log(`✅ ${goals.length} goals criados`)
+  console.log('✅ Seed completo!')
 }
 
 seed()

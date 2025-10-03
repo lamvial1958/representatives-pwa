@@ -45,18 +45,20 @@ model Client {
 }
 
 model Receivable {
-  id           String   @id @default(cuid())
-  clientId     String
-  customerName String
-  amount       Float
-  dueDate      DateTime
-  status       String   @default("pending")
-  description  String?
-  notes        String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id               String   @id @default(cuid())
+  clientId         String
+  customerName     String
+  amount           Float
+  dueDate          DateTime
+  status           String   @default("pending")
+  description      String?
+  notes            String?
+  commissionRate   Float?   @default(0.05)    // 5% padrão - PERSONALIZÁVEL
+  commissionAmount Float?                     // Valor calculado da comissão
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
   
-  client       Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  client           Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
   
   @@map("receivables")
 }

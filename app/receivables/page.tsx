@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -59,7 +59,7 @@ export default function ReceivablesPage() {
 
           return {
             id: String(id),
-            customer_name: r?.customer_name ?? r?.client_name ?? r?.customer ?? '—',
+            customer_name: r?.customerName ?? r?.client?.name ?? r?.client?.name ?? '—',
             amount: Number.isFinite(amount) ? amount : 0,
             due_date: typeof due_date === 'string' ? due_date : '',
             status,
@@ -388,3 +388,4 @@ export default function ReceivablesPage() {
     </div>
   );
 }
+

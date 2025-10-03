@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -134,8 +134,8 @@ export default function GoalsPage() {
   };
 
   const getProgressPercentage = (goal: Goal) => {
-    if (goal.target_amount === 0) return 0;
-    return Math.min((goal.current_amount / goal.target_amount) * 100, 100);
+    if (goal.targetAmount === 0) return 0;
+    return Math.min((goal.currentAmount / goal.targetAmount) * 100, 100);
   };
 
   const getStatusColor = (status: string) => {
@@ -228,13 +228,13 @@ export default function GoalsPage() {
                   <div className="flex justify-between items-start mb-4">
                     <div>
                       <h3 className="text-xl font-bold mb-1">
-                        {goal.period_type === 'monthly' ? '📅 Meta Mensal' :
-                         goal.period_type === 'weekly' ? '📊 Meta Semanal' :
-                         goal.period_type === 'daily' ? '⚡ Meta Diária' :
+                        {goal.periodType === 'monthly' ? '📅 Meta Mensal' :
+                         goal.periodType === 'weekly' ? '📊 Meta Semanal' :
+                         goal.periodType === 'daily' ? '⚡ Meta Diária' :
                          '🎯 Meta Personalizada'}
                       </h3>
                       <p className="text-blue-100 text-sm">
-                        {new Date(goal.period_start).toLocaleDateString('pt-BR')} - {new Date(goal.period_end).toLocaleDateString('pt-BR')}
+                        {new Date(goal.periodStart).toLocaleDateString('pt-BR')} - {new Date(goal.periodEnd).toLocaleDateString('pt-BR')}
                       </p>
                     </div>
                     <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(goal.status)}`}>
@@ -260,8 +260,8 @@ export default function GoalsPage() {
                       ></div>
                     </div>
                     <div className="flex justify-between text-xs text-gray-500 mt-1">
-                      <span>R$ {goal.current_amount.toLocaleString('pt-BR')}</span>
-                      <span>R$ {goal.target_amount.toLocaleString('pt-BR')}</span>
+                      <span>R$ {goal.currentAmount.toLocaleString('pt-BR')}</span>
+                      <span>R$ {goal.targetAmount.toLocaleString('pt-BR')}</span>
                     </div>
                   </div>
 
@@ -271,15 +271,15 @@ export default function GoalsPage() {
                       <div className="text-xl mb-1">💰</div>
                       <p className="text-xs text-gray-600">Meta Receita</p>
                       <p className="font-bold text-green-600 text-sm">
-                        R$ {goal.target_amount.toLocaleString('pt-BR')}
+                        R$ {goal.targetAmount.toLocaleString('pt-BR')}
                       </p>
                     </div>
-                    {goal.target_sales && (
+                    {goal.targetSales && (
                       <div className="text-center p-3 bg-blue-50 rounded-lg">
                         <div className="text-xl mb-1">📊</div>
                         <p className="text-xs text-gray-600">Meta Vendas</p>
                         <p className="font-bold text-blue-600 text-sm">
-                          {goal.current_sales}/{goal.target_sales}
+                          {goal.currentSales}/{goal.targetSales}
                         </p>
                       </div>
                     )}
@@ -298,11 +298,11 @@ export default function GoalsPage() {
                       onClick={() => {
                         setEditingGoal(goal);
                         setFormData({
-                          period_type: goal.period_type,
-                          period_start: goal.period_start,
-                          period_end: goal.period_end,
-                          target_amount: goal.target_amount,
-                          target_sales: goal.target_sales,
+                          period_type: goal.periodType,
+                          period_start: goal.periodStart,
+                          period_end: goal.periodEnd,
+                          target_amount: goal.targetAmount,
+                          target_sales: goal.targetSales,
                           notes: goal.notes || ''
                         });
                         setShowCreateModal(true);
@@ -479,3 +479,4 @@ export default function GoalsPage() {
     </div>
   );
 }
+

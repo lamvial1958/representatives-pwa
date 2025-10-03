@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server"
+﻿import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { DB_ENABLED } from "@/lib/config"
 
@@ -115,7 +115,7 @@ export async function GET() {
 
     // Calcular métricas derivadas
     const totalRevenue = receivablesByStatus
-      .filter(r => r.status === 'received')
+      .filter(r => ['received', 'pending', 'overdue'].includes(r.status))
       .reduce((sum, r) => sum + (r._sum.amount || 0), 0)
 
     // CORRIGIDO: Calcular comissões (10% do total de vendas)
@@ -151,16 +151,18 @@ export async function GET() {
     const thisMonthCommissions = Math.round((thisMonthSales._sum.amount || 0) * COMMISSION_RATE * 100) / 100
     const lastMonthCommissions = Math.round((lastMonthSales._sum.amount || 0) * COMMISSION_RATE * 100) / 100
     
-    const commissionGrowth = lastMonthCommissions > 0 
-      ? ((thisMonthCommissions - lastMonthCommissions) / lastMonthCommissions) * 100 
-      : 0
+    const commissionGrowth = lastMonthCommissions > 0
+      ? ((thisMonthCommissions - lastMonthCommissions) / lastMonthCommissions) * 100
+      : thisMonthCommissions > 0 
+        ? 100  // Crescimento de R$ 0 para valor positivo = +100%
+        : 0    // Ambos zero = sem crescimento
 
     const pendingCommissions = receivablesByStatus
       .filter(r => ['pending', 'overdue'].includes(r.status))
       .reduce((sum, r) => sum + (r._sum.amount || 0), 0) * COMMISSION_RATE
 
     const paidCommissions = receivablesByStatus
-      .filter(r => r.status === 'received')
+      .filter(r => ['received', 'pending', 'overdue'].includes(r.status))
       .reduce((sum, r) => sum + (r._sum.amount || 0), 0) * COMMISSION_RATE
 
     const overdueCount = receivablesByStatus
@@ -185,8 +187,8 @@ export async function GET() {
       id: client.id,
       name: client.name,
       company: client.company,
-      totalReceivables: client.receivables.reduce((sum, r) => sum + r.amount, 0),
-      receivableCount: client._count.receivables
+      totalPurchases: client.receivables.reduce((sum, r) => sum + r.amount, 0),
+      lastPurchase: client.receivables.length > 0 ? client.receivables[0].createdAt : client.createdAt
     }))
 
     const goalProgress = goals.map(goal => ({
@@ -240,7 +242,8 @@ export async function GET() {
           amount: r.amount,
           dueDate: r.dueDate,
           status: r.status,
-          createdAt: r.createdAt
+          createdAt: r.createdAt,
+          commission: r.amount * (r.commissionRate || 0.05)  // ← NOVA LINHA
         })),
         
         topClients,
@@ -270,3 +273,6 @@ export async function GET() {
     )
   }
 }
+
+
+
