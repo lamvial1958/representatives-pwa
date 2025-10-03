@@ -97,7 +97,7 @@ export default function LicensePage() {
       if (license && license.key) {
         const validation = validateLicense(license.key);
         if (validation.isValid && validation.deviceId) {
-          license.deviceId = validation.deviceId;
+          (license as any).deviceId = validation.deviceId;
         }
       }
       
@@ -439,4 +439,5 @@ export default function LicensePage() {
     </div>
   );
 }
+
 
