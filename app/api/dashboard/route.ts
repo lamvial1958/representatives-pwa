@@ -88,7 +88,7 @@ export async function GET() {
         include: {
           receivables: {
             where: { status: { in: ['pending', 'overdue'] } },
-            select: { amount: true }
+            select: { amount: true, createdAt: true }
           },
           _count: { select: { receivables: true } }
         },
@@ -273,6 +273,7 @@ export async function GET() {
     )
   }
 }
+
 
 
 
