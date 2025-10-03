@@ -222,7 +222,7 @@ export default function GoalsPage() {
         {goals.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {goals.map((goal) => (
-              <div key={goal.id} className="bg-white rounded-2xl shadow-xl overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
+              <div key={(goal as any).id} className="bg-white rounded-2xl shadow-xl overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
                 {/* Goal Header */}
                 <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-6 text-white">
                   <div className="flex justify-between items-start mb-4">
@@ -237,8 +237,8 @@ export default function GoalsPage() {
                         {new Date((goal as any).periodStart).toLocaleDateString('pt-BR')} - {new Date((goal as any).periodEnd).toLocaleDateString('pt-BR')}
                       </p>
                     </div>
-                    <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(goal.status)}`}>
-                      {getStatusIcon(goal.status)} {goal.status === 'completed' ? 'Concluído' : goal.status === 'overdue' ? 'Atrasado' : 'Ativo'}
+                    <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor((goal as any).status)}`}>
+                      {getStatusIcon((goal as any).status)} {(goal as any).status === 'completed' ? 'Concluído' : (goal as any).status === 'overdue' ? 'Atrasado' : 'Ativo'}
                     </span>
                   </div>
                 </div>
@@ -286,9 +286,9 @@ export default function GoalsPage() {
                   </div>
 
                   {/* Notes */}
-                  {goal.notes && (
+                  {(goal as any).notes && (
                     <div className="mb-4 p-3 bg-gray-50 rounded-lg">
-                      <p className="text-sm text-gray-700">{goal.notes}</p>
+                      <p className="text-sm text-gray-700">{(goal as any).notes}</p>
                     </div>
                   )}
 
@@ -303,7 +303,7 @@ export default function GoalsPage() {
                           period_end: (goal as any).periodEnd,
                           target_amount: (goal as any).targetAmount,
                           target_sales: (goal as any).targetSales,
-                          notes: goal.notes || ''
+                          notes: (goal as any).notes || ''
                         });
                         setShowCreateModal(true);
                       }}
@@ -312,7 +312,7 @@ export default function GoalsPage() {
                       ✏️ Editar
                     </button>
                     <button
-                      onClick={() => handleDelete(goal.id)}
+                      onClick={() => handleDelete((goal as any).id)}
                       className="bg-red-100 hover:bg-red-200 text-red-700 py-2 px-4 rounded-lg text-sm font-medium transition-colors"
                     >
                       🗑️
@@ -479,6 +479,7 @@ export default function GoalsPage() {
     </div>
   );
 }
+
 
 
 

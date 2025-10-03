@@ -94,8 +94,8 @@ export default function LicensePage() {
       const license = await manager.getLicense();
       
       // Adicionar deviceId se licença existir
-      if (license && license.key) {
-        const validation = validateLicense(license.key);
+      if (license && (license as any).key) {
+        const validation = validateLicense((license as any).key);
         if (validation.isValid && validation.deviceId) {
           (license as any).deviceId = validation.deviceId;
         }
@@ -439,5 +439,6 @@ export default function LicensePage() {
     </div>
   );
 }
+
 
 

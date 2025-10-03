@@ -380,17 +380,17 @@ export default function DashboardPage() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-lg font-bold text-orange-600">
-                          {formatCurrency(sale.commission)}
+                          {formatCurrency((sale as any).commission)}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                          sale.status === 'confirmed' ? 'bg-green-100 text-green-800' :
-                          sale.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                          (sale as any).status === 'confirmed' ? 'bg-green-100 text-green-800' :
+                          (sale as any).status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
                           'bg-red-100 text-red-800'
                         }`}>
-                          {sale.status === 'confirmed' ? '✅ Confirmada' :
-                           sale.status === 'pending' ? '⏳ Pendente' :
+                          {(sale as any).status === 'confirmed' ? '✅ Confirmada' :
+                           (sale as any).status === 'pending' ? '⏳ Pendente' :
                            '❌ Cancelada'}
                         </span>
                       </td>
@@ -419,7 +419,7 @@ export default function DashboardPage() {
                 {dashboardData.topClients.map((client, index) => (
                   <div key={index} className="bg-gradient-to-br from-gray-50 to-blue-50 rounded-xl p-6">
                     <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-lg font-bold text-gray-800">{client.name}</h3>
+                      <h3 className="text-lg font-bold text-gray-800">{(client as any).name}</h3>
                       <div className="text-2xl">
                         {index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉'}
                       </div>
@@ -428,13 +428,13 @@ export default function DashboardPage() {
                       <div>
                         <p className="text-sm text-gray-600">Total em Compras</p>
                         <p className="text-xl font-bold text-green-600">
-                          {formatCurrency(client.totalPurchases)}
+                          {formatCurrency((client as any).totalPurchases)}
                         </p>
                       </div>
                       <div>
                         <p className="text-sm text-gray-600">Última Compra</p>
                         <p className="text-sm font-medium text-gray-800">
-                          {new Date(client.createdAt).toLocaleDateString('pt-BR')}
+                          {new Date((client as any).createdAt).toLocaleDateString('pt-BR')}
                         </p>
                       </div>
                     </div>
@@ -566,6 +566,7 @@ export default function DashboardPage() {
     </div>
   );
 }
+
 
 
 
