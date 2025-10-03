@@ -65,11 +65,13 @@ export async function GET() {
         select: {
           id: true,
           title: true,
+          periodType: true,
+          periodStart: true,
+          periodEnd: true,
           targetAmount: true,
           currentAmount: true,
           targetSales: true,
           currentSales: true,
-          periodEnd: true,
           status: true
         }
       }),
@@ -280,6 +282,7 @@ export async function GET() {
     )
   }
 }
+
 
 
 
