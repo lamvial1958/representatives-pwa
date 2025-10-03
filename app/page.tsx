@@ -369,13 +369,13 @@ export default function DashboardPage() {
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {dashboardData.recentSales.map((sale) => (
-                    <tr key={sale.id} className="hover:bg-gray-50">
+                    <tr key={(sale as any).id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="font-medium text-gray-900">{sale.client?.name || sale.client}</div>
+                        <div className="font-medium text-gray-900">{(sale as any).client?.name || (sale as any).client}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-lg font-bold text-green-600">
-                          {formatCurrency(sale.amount)}
+                          {formatCurrency((sale as any).amount)}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -395,7 +395,7 @@ export default function DashboardPage() {
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {new Date(sale.createdAt).toLocaleDateString('pt-BR')}
+                        {new Date((sale as any).createdAt).toLocaleDateString('pt-BR')}
                       </td>
                     </tr>
                   ))}
@@ -566,6 +566,7 @@ export default function DashboardPage() {
     </div>
   );
 }
+
 
 
 
