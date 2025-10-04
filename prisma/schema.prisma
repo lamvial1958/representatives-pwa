@@ -1,10 +1,13 @@
+// prisma/schema.prisma
+
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("URL_DO_BANCO_DE_DADOS")            // Pooled (Neon)
+  directUrl = env("URL_DO_BANCO_DE_DADOS_UNPOOLED")   // Direct (Neon)
 }
 
 model License {
@@ -20,7 +23,7 @@ model License {
   lastCheck   DateTime @default(now())
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  
+
   @@map("licenses")
 }
 
@@ -38,9 +41,9 @@ model Client {
   active    Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
+
   receivables Receivable[]
-  
+
   @@map("clients")
 }
 
@@ -57,9 +60,9 @@ model Receivable {
   commissionAmount Float?                     // Valor calculado da comissão
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
-  
+
   client           Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  
+
   @@map("receivables")
 }
 
@@ -78,6 +81,6 @@ model Goal {
   notes         String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
-  
+
   @@map("goals")
 }
