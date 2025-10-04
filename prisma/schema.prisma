@@ -1,24 +1,23 @@
 // prisma/schema.prisma
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
   provider  = "postgresql"
-  url       = env("URL_DO_BANCO_DE_DADOS")            // Pooled (Neon)
-  directUrl = env("URL_DO_BANCO_DE_DADOS_UNPOOLED")   // Direct (Neon)
+  url       = env("POSTGRES_PRISMA_URL")      // Pooled connection
+  directUrl = env("POSTGRES_URL_NON_POOLING") // Direct connection
 }
 
 model License {
   id          String   @id @default(cuid())
   key         String   @unique
-  type        String   // trial, standard, premium, enterprise
-  status      String   @default("active") // active, expired, revoked, suspended
+  type        String   
+  status      String   @default("active")
   expiryDate  DateTime?
   maxUsers    Int      @default(1)
-  features    String   // JSON string com features habilitadas
-  issuedTo    String?  // nome/empresa
+  features    String   
+  issuedTo    String?  
   issuedAt    DateTime @default(now())
   lastCheck   DateTime @default(now())
   createdAt   DateTime @default(now())
@@ -56,8 +55,8 @@ model Receivable {
   status           String   @default("pending")
   description      String?
   notes            String?
-  commissionRate   Float?   @default(0.05)    // 5% padrão - PERSONALIZÁVEL
-  commissionAmount Float?                     // Valor calculado da comissão
+  commissionRate   Float?   @default(0.05)
+  commissionAmount Float?
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
