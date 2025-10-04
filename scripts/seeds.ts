@@ -110,6 +110,44 @@ async function seed() {
   ])
 
   console.log(`✅ ${goals.length} goals criados`)
+
+  // ============================================================================
+  // CRIAR LICENÇA MASTER (VIAL)
+  // ============================================================================
+  
+  console.log('🔑 Criando licença master...')
+  
+  // Verificar se licença VIAL já existe
+  const existingVIAL = await prisma.license.findUnique({
+    where: { licenseKey: 'ENTP-2025-VIAL-0001' }
+  })
+  
+  if (existingVIAL) {
+    console.log('⚠️  Licença VIAL já existe, pulando criação')
+  } else {
+    const masterLicense = await prisma.license.create({
+      data: {
+        licenseKey: 'ENTP-2025-VIAL-0001',
+        type: 'enterprise',
+        status: 'active',
+        expiryDate: null, // Vitalícia
+        maxUsers: 999,
+        features: JSON.stringify(['all']),
+        issuedTo: 'Vial (Proprietário)',
+        companyName: 'VIAL Development',
+        issuedAt: new Date('2025-10-02T00:00:00.000Z'),
+        lastCheck: new Date()
+      }
+    })
+    
+    console.log(`✅ Licença master criada: ${masterLicense.licenseKey}`)
+    console.log(`   Tipo: ${masterLicense.type}`)
+    console.log(`   Status: ${masterLicense.status}`)
+    console.log(`   Vitalícia: ${masterLicense.expiryDate === null ? 'Sim' : 'Não'}`)
+    console.log(`   Emitida para: ${masterLicense.issuedTo}`)
+    console.log(`   Empresa: ${masterLicense.companyName}`)
+  }
+
   console.log('✅ Seed completo!')
 }
 

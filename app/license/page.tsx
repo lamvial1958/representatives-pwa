@@ -2,84 +2,14 @@
 
 import React, { useState, useEffect } from 'react';
 import { LicenseManager } from '@/lib/license-manager';
+import { LicenseView, BackupMetadata } from '@/lib/license-types';
 import { useTranslation } from 'react-i18next';
 import Breadcrumbs from '@/components/ui/Breadcrumbs';
 
-interface LicenseData {
-  hasLicense: boolean;
-  key?: string;
-  type: 'trial' | 'standard' | 'premium' | 'enterprise';
-  status: 'active' | 'expired' | 'revoked' | 'suspended';
-  expiryDate?: Date | null;
-  daysRemaining: number;
-  maxUsers: number;
-  issuedTo?: string;
-  features: string[];
-  isValid: boolean;
-  isLifetime?: boolean;
-  deviceId?: string;
-}
-
-// Gerar fingerprint baseado em hardware físico
-const generateDeviceFingerprint = () => {
-  // Canvas fingerprint (GPU física)
-  const canvas = document.createElement('canvas');
-  const ctx = canvas.getContext('2d');
-  if (ctx) {
-    ctx.textBaseline = 'top';
-    ctx.font = '14px Arial';
-    ctx.fillText('Hardware ID', 2, 2);
-  }
-  
-  const hardwareData = [
-    screen.width + 'x' + screen.height + 'x' + screen.colorDepth, // Monitor físico
-    navigator.hardwareConcurrency || 'unknown',                  // CPU cores
-    new Date().getTimezoneOffset(),                              // Localização física
-    navigator.platform,                                          // OS/arquitetura
-    canvas.toDataURL().substring(0, 50)                         // GPU fingerprint
-  ].join('|');
-  
-  return btoa(hardwareData).substring(0, 32);
-};
-
-// Validar licença com controle de hardware
-const validateLicense = (key: string) => {
-  const validLicenses = [
-    'FULL-LICENSE-2024-PREMIUM',
-    'FULL-LICENSE-2024-ULTIMATE'
-  ];
-  
-  if (!validLicenses.includes(key)) {
-    return { isValid: false, message: 'Licença inválida' };
-  }
-
-  const deviceId = generateDeviceFingerprint();
-  const storageKey = `license-${key}`;
-  const storedDevice = localStorage.getItem(storageKey);
-  
-  if (storedDevice && storedDevice !== deviceId) {
-    return { 
-      isValid: false, 
-      message: 'Esta licença já foi ativada em outro dispositivo. Licenças são pessoais e intransferíveis.' 
-    };
-  }
-  
-  // Primeira ativação - vincular ao dispositivo
-  if (!storedDevice) {
-    localStorage.setItem(storageKey, deviceId);
-  }
-  
-  return { 
-    isValid: true, 
-    message: 'Licença ativada com sucesso!',
-    isLifetime: true,
-    deviceId: deviceId.substring(0, 8)
-  };
-};
-
 export default function LicensePage() {
   const { t } = useTranslation();
-  const [licenseData, setLicenseData] = useState<LicenseData | null>(null);
+  const [licenseData, setLicenseData] = useState<LicenseView | null>(null);
+  const [backups, setBackups] = useState<BackupMetadata[]>([]);
   const [loading, setLoading] = useState(true);
   const [activating, setActivating] = useState(false);
   const [newLicenseKey, setNewLicenseKey] = useState('');
@@ -91,22 +21,32 @@ export default function LicensePage() {
     try {
       setLoading(true);
       const manager = LicenseManager.getInstance();
-      const license = await manager.getLicense();
-      
-      // Adicionar deviceId se licença existir
-      if (license && (license as any).key) {
-        const validation = validateLicense((license as any).key);
-        if (validation.isValid && validation.deviceId) {
-          (license as any).deviceId = validation.deviceId;
-        }
-      }
-      
+      await manager.initialize();
+      const license = manager.getLicense();
       setLicenseData(license);
+
+      // Carregar backups se licença existir
+      if (license?.deviceId) {
+        await loadBackups(license.deviceId);
+      }
     } catch (error) {
       console.error('Erro ao carregar licença:', error);
       setError('Erro ao carregar dados da licença');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadBackups = async (deviceId: string) => {
+    try {
+      const response = await fetch(`/api/license/backups?deviceId=${deviceId}`);
+      const data = await response.json();
+      
+      if (data.success) {
+        setBackups(data.data);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar backups:', error);
     }
   };
 
@@ -122,30 +62,85 @@ export default function LicensePage() {
         return;
       }
 
-      // Validar licença com controle de hardware
-      const validation = validateLicense(newLicenseKey.trim());
-      
-      if (!validation.isValid) {
-        setError(validation.message);
-        return;
-      }
-
       const manager = LicenseManager.getInstance();
-      const result = await manager.activateLicense(newLicenseKey.trim(), issuedTo.trim() || undefined);
+      const result = await manager.activate(
+        newLicenseKey.trim(), 
+        issuedTo.trim() || undefined
+      );
       
       if (result) {
-        setSuccess(`${validation.message} Device ID: ${validation.deviceId}`);
+        setSuccess(`Licença ativada com sucesso! Device ID: ${result.deviceId.substring(0, 8)}`);
         setNewLicenseKey('');
         setIssuedTo('');
-        await loadLicense();
-      } else {
-        setError('Erro interno ao ativar a licença');
+        setLicenseData(result);
+        
+        // Carregar backups
+        if (result.deviceId) {
+          await loadBackups(result.deviceId);
+        }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao ativar licença:', error);
-      setError('Erro ao ativar a licença');
+      setError(error.message || 'Erro ao ativar a licença');
     } finally {
       setActivating(false);
+    }
+  };
+
+  const handleCreateBackup = async () => {
+    if (!licenseData?.deviceId) return;
+
+    try {
+      const response = await fetch('/api/license/backup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          deviceId: licenseData.deviceId,
+          reason: 'manual'
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setSuccess('Backup criado com sucesso!');
+        await loadBackups(licenseData.deviceId);
+      } else {
+        setError(data.error || 'Erro ao criar backup');
+      }
+    } catch (error) {
+      console.error('Erro ao criar backup:', error);
+      setError('Erro ao criar backup');
+    }
+  };
+
+  const handleRestoreBackup = async (backupId: string) => {
+    if (!confirm('Deseja restaurar este backup? As alterações atuais serão substituídas.')) {
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/license/restore', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ backupId })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setSuccess('Backup restaurado com sucesso!');
+        setLicenseData(data.data);
+        
+        if (data.data.deviceId) {
+          await loadBackups(data.data.deviceId);
+        }
+      } else {
+        setError(data.error || 'Erro ao restaurar backup');
+      }
+    } catch (error) {
+      console.error('Erro ao restaurar backup:', error);
+      setError('Erro ao restaurar backup');
     }
   };
 
@@ -153,9 +148,9 @@ export default function LicensePage() {
     loadLicense();
   }, []);
 
-  const formatDate = (date: Date | null) => {
-    if (!date) return 'Sem expiração';
-    return new Date(date).toLocaleDateString('pt-BR');
+  const formatDate = (isoDate: string | null) => {
+    if (!isoDate) return 'Sem expiração';
+    return new Date(isoDate).toLocaleDateString('pt-BR');
   };
 
   const getStatusColor = (status: string) => {
@@ -216,7 +211,7 @@ export default function LicensePage() {
             🔑 Gerenciamento de Licença
           </h1>
           <p className="text-gray-600 text-xl max-w-2xl mx-auto">
-            Controle e ative sua licença do sistema de representantes
+            Sistema de licenciamento server-first com rastreamento de dispositivos
           </p>
         </div>
 
@@ -256,14 +251,12 @@ export default function LicensePage() {
                     </div>
                   </div>
 
-                  {licenseData.key && (
-                    <div>
-                      <label className="text-sm font-medium text-gray-600">Chave da Licença</label>
-                      <div className="mt-1 font-mono text-lg font-bold text-gray-900 bg-gray-100 p-3 rounded-lg">
-                        {licenseData.key}
-                      </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">Chave da Licença</label>
+                    <div className="mt-1 font-mono text-lg font-bold text-gray-900 bg-gray-100 p-3 rounded-lg">
+                      {licenseData.key}
                     </div>
-                  )}
+                  </div>
 
                   <div>
                     <label className="text-sm font-medium text-gray-600">Tipo</label>
@@ -275,19 +268,17 @@ export default function LicensePage() {
                   <div>
                     <label className="text-sm font-medium text-gray-600">Dias Restantes</label>
                     <div className="mt-1 text-lg font-bold text-gray-900">
-                      {licenseData.isLifetime ? 'Vitalícia' : `${licenseData.daysRemaining} dias`}
+                      {licenseData.isLifetime ? '∞ Vitalícia' : `${licenseData.daysRemaining} dias`}
                     </div>
                   </div>
 
-                  {licenseData.deviceId && (
-                    <div>
-                      <label className="text-sm font-medium text-gray-600">ID do Dispositivo</label>
-                      <div className="mt-1 font-mono text-sm text-gray-700 bg-yellow-50 p-2 rounded border">
-                        🔒 {licenseData.deviceId}
-                      </div>
-                      <p className="text-xs text-gray-500 mt-1">Licença vinculada a este dispositivo</p>
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">Device ID (Hardware)</label>
+                    <div className="mt-1 font-mono text-sm text-gray-700 bg-blue-50 p-2 rounded border border-blue-200">
+                      🔒 {licenseData.deviceId.substring(0, 12)}...
                     </div>
-                  )}
+                    <p className="text-xs text-gray-500 mt-1">Vinculada a este hardware físico</p>
+                  </div>
                 </div>
 
                 <div className="space-y-4">
@@ -298,11 +289,18 @@ export default function LicensePage() {
                     </div>
                   </div>
 
-                  {licenseData.issuedTo && (
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">Emitida para</label>
+                    <div className="mt-1 text-lg font-bold text-gray-900">
+                      {licenseData.issuedTo}
+                    </div>
+                  </div>
+
+                  {licenseData.companyName && (
                     <div>
-                      <label className="text-sm font-medium text-gray-600">Emitida para</label>
+                      <label className="text-sm font-medium text-gray-600">Empresa</label>
                       <div className="mt-1 text-lg font-bold text-gray-900">
-                        {licenseData.issuedTo}
+                        {licenseData.companyName}
                       </div>
                     </div>
                   )}
@@ -310,16 +308,16 @@ export default function LicensePage() {
                   <div>
                     <label className="text-sm font-medium text-gray-600">Data de Expiração</label>
                     <div className="mt-1 text-lg font-bold text-gray-900">
-                      {licenseData.isLifetime ? 'Sem expiração' : formatDate(licenseData.expiryDate || null)}
+                      {formatDate(licenseData.expiryDate)}
                     </div>
                   </div>
 
                   <div>
-                    <label className="text-sm font-medium text-gray-600">Funcionalidades Habilitadas</label>
+                    <label className="text-sm font-medium text-gray-600">Funcionalidades</label>
                     <div className="mt-1">
                       {licenseData.features.includes('all') ? (
                         <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
-                          Todas as funcionalidades
+                          ✓ Todas as funcionalidades
                         </span>
                       ) : (
                         <div className="flex flex-wrap gap-2">
@@ -333,98 +331,158 @@ export default function LicensePage() {
                     </div>
                   </div>
                 </div>
+
+                {/* Policy Info */}
+                <div className="md:col-span-2 pt-4 border-t">
+                  <label className="text-sm font-medium text-gray-600 block mb-2">Políticas de Segurança</label>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                    <div>
+                      <span className="text-gray-500">Tolerância:</span>
+                      <span className="ml-1 font-bold">{(licenseData.policy.fingerprintTolerance * 100).toFixed(0)}%</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">Grace Period:</span>
+                      <span className="ml-1 font-bold">{licenseData.policy.graceDays} dias</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">Trial:</span>
+                      <span className="ml-1 font-bold">{licenseData.policy.allowTrial ? 'Habilitado' : 'Desabilitado'}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">Última Validação:</span>
+                      <span className="ml-1 font-bold">{new Date(licenseData.lastValidatedAt).toLocaleTimeString('pt-BR')}</span>
+                    </div>
+                  </div>
+                </div>
               </div>
             ) : (
               <div className="text-center py-8">
                 <div className="text-gray-400 text-6xl mb-4">🔓</div>
                 <h3 className="text-xl font-bold text-gray-900 mb-2">Nenhuma licença ativa</h3>
                 <p className="text-gray-600">
-                  Você está usando a versão de avaliação limitada do sistema.
+                  Ative uma licença para desbloquear todas as funcionalidades.
                 </p>
               </div>
             )}
           </div>
         </div>
 
+        {/* Backup Section */}
+        {licenseData && (
+          <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+            <div className="bg-gradient-to-r from-purple-500 to-pink-600 p-6">
+              <h2 className="text-xl font-bold text-white flex items-center justify-between">
+                <span className="flex items-center">
+                  <span className="mr-3 text-2xl">💾</span>
+                  Backups
+                </span>
+                <button
+                  onClick={handleCreateBackup}
+                  className="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg text-sm font-medium transition"
+                >
+                  + Criar Backup
+                </button>
+              </h2>
+            </div>
+            
+            <div className="p-8">
+              {backups.length > 0 ? (
+                <div className="space-y-3">
+                  {backups.map((backup) => (
+                    <div key={backup.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                      <div>
+                        <div className="font-medium text-gray-900">
+                          {new Date(backup.createdAt).toLocaleString('pt-BR')}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          Razão: {backup.reason} • {backup.preview?.licenseKey || 'N/A'}
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => handleRestoreBackup(backup.id)}
+                        className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition"
+                      >
+                        Restaurar
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  Nenhum backup disponível. Crie um backup para salvar o estado atual.
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Activate License Form */}
-        <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
-          <div className="bg-gradient-to-r from-green-500 to-blue-600 p-6">
-            <h2 className="text-xl font-bold text-white flex items-center">
-              <span className="mr-3 text-2xl">🚀</span>
-              Ativar Nova Licença
-            </h2>
-          </div>
-          
-          <div className="p-8">
-            <form onSubmit={handleActivateLicense} className="space-y-6">
-              <div>
-                <label htmlFor="licenseKey" className="block text-sm font-medium text-gray-700 mb-2">
-                  Chave da Licença *
-                </label>
-                <input
-                  type="text"
-                  id="licenseKey"
-                  value={newLicenseKey}
-                  onChange={(e) => setNewLicenseKey(e.target.value)}
-                  placeholder="FULL-LICENSE-2024-PREMIUM"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono"
-                  disabled={activating}
-                />
-              </div>
-
-              <div>
-                <label htmlFor="issuedTo" className="block text-sm font-medium text-gray-700 mb-2">
-                  Nome do Titular (Opcional)
-                </label>
-                <input
-                  type="text"
-                  id="issuedTo"
-                  value={issuedTo}
-                  onChange={(e) => setIssuedTo(e.target.value)}
-                  placeholder="Digite seu nome ou empresa"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  disabled={activating}
-                />
-              </div>
-
-              <button
-                type="submit"
-                disabled={activating || !newLicenseKey.trim()}
-                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-4 px-6 rounded-lg font-bold text-lg hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
-              >
-                {activating ? 'Ativando...' : 'Ativar Licença'}
-              </button>
-            </form>
-
-            {/* Security Notice */}
-            <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-              <h3 className="text-sm font-bold text-yellow-800 flex items-center mb-2">
-                <span className="mr-2">🔒</span>
-                Licença Pessoal e Intransferível
-              </h3>
-              <div className="space-y-1 text-xs text-yellow-700">
-                <p>• A licença será vinculada permanentemente a este dispositivo</p>
-                <p>• Não poderá ser usada em outros computadores/dispositivos</p>
-                <p>• Baseado em características únicas do seu hardware</p>
-                <p>• Flexível a atualizações de navegador e sistema operacional</p>
-              </div>
+        {!licenseData && (
+          <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+            <div className="bg-gradient-to-r from-green-500 to-blue-600 p-6">
+              <h2 className="text-xl font-bold text-white flex items-center">
+                <span className="mr-3 text-2xl">🚀</span>
+                Ativar Licença
+              </h2>
             </div>
+            
+            <div className="p-8">
+              <form onSubmit={handleActivateLicense} className="space-y-6">
+                <div>
+                  <label htmlFor="licenseKey" className="block text-sm font-medium text-gray-700 mb-2">
+                    Chave da Licença *
+                  </label>
+                  <input
+                    type="text"
+                    id="licenseKey"
+                    autoComplete="off"
+                    value={newLicenseKey}
+                    onChange={(e) => setNewLicenseKey(e.target.value)}
+                    placeholder="ENTP-2025-VIAL-0001"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono"
+                    disabled={activating}
+                  />
+                </div>
 
-            {/* Help Section */}
-            <div className="mt-8 p-6 bg-gray-50 rounded-lg">
-              <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center">
-                <span className="mr-2">💡</span>
-                Como obter uma licença
-              </h3>
-              <div className="space-y-2 text-sm text-gray-600">
-                <p>• Entre em contato com o desenvolvedor para adquirir uma licença</p>
-                <p>• Licenças válidas: FULL-LICENSE-2024-PREMIUM ou FULL-LICENSE-2024-ULTIMATE</p>
-                <p>• Após a ativação, todas as funcionalidades serão desbloqueadas</p>
-                <p>• Licenças são vitalícias e vinculadas ao seu dispositivo</p>
+                <div>
+                  <label htmlFor="issuedTo" className="block text-sm font-medium text-gray-700 mb-2">
+                    Nome do Titular (Opcional)
+                  </label>
+                  <input
+                    type="text"
+                    id="issuedTo"
+                    value={issuedTo}
+                    onChange={(e) => setIssuedTo(e.target.value)}
+                    placeholder="Digite seu nome ou empresa"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    disabled={activating}
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={activating || !newLicenseKey.trim()}
+                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-4 px-6 rounded-lg font-bold text-lg hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                >
+                  {activating ? 'Ativando...' : 'Ativar Licença'}
+                </button>
+              </form>
+
+              <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <h3 className="text-sm font-bold text-blue-800 flex items-center mb-2">
+                  <span className="mr-2">🔒</span>
+                  Sistema Server-First
+                </h3>
+                <div className="space-y-1 text-xs text-blue-700">
+                  <p>• Licença validada no servidor PostgreSQL (Neon)</p>
+                  <p>• Hardware rígido: Canvas, CPU, RAM, Screen (não muda)</p>
+                  <p>• Browser flexível: Chrome, Firefox, Safari (pode atualizar)</p>
+                  <p>• Heartbeat automático a cada 5 minutos</p>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Actions */}
         <div className="text-center">
@@ -439,6 +497,3 @@ export default function LicensePage() {
     </div>
   );
 }
-
-
-
