@@ -107,16 +107,16 @@ export async function GET() {
         take: 5
       }),
       
-      // Stats mensais (últimos 6 meses)
+      // Stats mensais (últimos 6 meses) - CORRIGIDO PARA POSTGRESQL
       prisma.$queryRaw`
         SELECT 
-          strftime('%Y-%m', createdAt) as month,
+          TO_CHAR("createdAt", 'YYYY-MM') as month,
           COUNT(*) as count,
           SUM(amount) as total,
           AVG(amount) as average
-        FROM receivables 
-        WHERE createdAt >= datetime('now', '-6 months')
-        GROUP BY strftime('%Y-%m', createdAt)
+        FROM "receivables"
+        WHERE "createdAt" >= NOW() - INTERVAL '6 months'
+        GROUP BY TO_CHAR("createdAt", 'YYYY-MM')
         ORDER BY month DESC
         LIMIT 6
       `
@@ -252,7 +252,7 @@ export async function GET() {
           dueDate: r.dueDate,
           status: r.status,
           createdAt: r.createdAt,
-          commission: r.amount * (r.commissionRate || 0.05)  // ← NOVA LINHA
+          commission: r.amount * (r.commissionRate || 0.05)
         })),
         
         topClients,
@@ -282,10 +282,3 @@ export async function GET() {
     )
   }
 }
-
-
-
-
-
-
-
