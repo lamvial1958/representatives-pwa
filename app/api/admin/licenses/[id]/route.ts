@@ -6,7 +6,7 @@ import { ApiResponse } from '@/lib/license-types'
 // PUT /api/admin/licenses/[id] - Atualizar licença
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }  // ✅ Adicionar Promise aqui
 ) {
   // Verificar autenticação
   const authResult = await requireAuth(request)
@@ -15,7 +15,8 @@ export async function PUT(
   }
 
   try {
-    const { id } = params
+    const { id } = await params  // ✅ Adicionar await aqui
+
     const body = await request.json()
 
     // Verificar se licença existe
@@ -159,7 +160,7 @@ export async function PUT(
 // DELETE /api/admin/licenses/[id] - Revogar licença
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }  // ✅ Adicionar Promise aqui
 ) {
   // Verificar autenticação
   const authResult = await requireAuth(request)
@@ -168,7 +169,7 @@ export async function DELETE(
   }
 
   try {
-    const { id } = params
+    const { id } = await params  // ✅ Adicionar await aqui
 
     // Verificar se licença existe
     const existingLicense = await prisma.license.findUnique({
