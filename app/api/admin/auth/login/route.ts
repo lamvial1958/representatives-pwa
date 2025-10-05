@@ -9,9 +9,9 @@ export async function POST(req: NextRequest): Promise<NextResponse<LoginResponse
     // Validar entrada
     if (!body.password) {
       return NextResponse.json({
-        success: false,
+        success: false as const,  // ✅ Literal type
         error: 'Senha é obrigatória',
-        code: 'INVALID_PASSWORD'
+        code: 'INVALID_PASSWORD' as const
       }, { status: 400 })
     }
 
@@ -21,9 +21,9 @@ export async function POST(req: NextRequest): Promise<NextResponse<LoginResponse
     if (!isValid) {
       console.warn('Tentativa de login com senha incorreta')
       return NextResponse.json({
-        success: false,
+        success: false as const,  // ✅ Literal type
         error: 'Senha incorreta',
-        code: 'INVALID_PASSWORD'
+        code: 'INVALID_PASSWORD' as const
       }, { status: 401 })
     }
 
@@ -40,7 +40,7 @@ export async function POST(req: NextRequest): Promise<NextResponse<LoginResponse
 
     // Criar resposta com cookie
     const response = NextResponse.json({
-      success: true,
+      success: true as const,  // ✅ Literal type (FIX PRINCIPAL)
       message: 'Login realizado com sucesso',
       expiresAt
     }, { status: 200 })
@@ -57,9 +57,9 @@ export async function POST(req: NextRequest): Promise<NextResponse<LoginResponse
   } catch (error: any) {
     console.error('Erro no login admin:', error)
     return NextResponse.json({
-      success: false,
+      success: false as const,  // ✅ Literal type
       error: 'Erro interno no servidor',
-      code: 'UNAUTHORIZED'
+      code: 'UNAUTHORIZED' as const
     }, { status: 500 })
   }
 }
