@@ -11,7 +11,7 @@ export async function POST(req: NextRequest): Promise<NextResponse<LogoutRespons
 
     // Criar resposta
     const response = NextResponse.json({
-      success: true,
+      success: true as const,  // ✅ FIX
       message: 'Logout realizado com sucesso'
     }, { status: 200 })
 
@@ -27,7 +27,7 @@ export async function POST(req: NextRequest): Promise<NextResponse<LogoutRespons
   } catch (error: any) {
     console.error('Erro no logout admin:', error)
     return NextResponse.json({
-      success: true,
+      success: true as const,  // ✅ FIX
       message: 'Logout realizado' // Sempre retorna sucesso
     }, { status: 200 })
   }
